@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "XRI Default Input Actions",
     "maps": [
         {
@@ -546,7 +547,7 @@
                 {
                     "name": "",
                     "id": "acdf9550-5529-4ff7-8558-73ecdf0d75bd",
-                    "path": "<XRController>{LeftHand}/*",
+                    "path": "<XRController>{LeftHand}/{Haptic}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -1639,7 +1640,7 @@
                 {
                     "name": "",
                     "id": "6011e1e6-b2dd-4cb1-8da5-29b03868f2c5",
-                    "path": "<XRController>{RightHand}/*",
+                    "path": "<XRController>{RightHand}/{Haptic}",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
