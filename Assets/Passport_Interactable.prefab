@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 108024620129458545}
   - component: {fileID: 3707663391595059945}
   - component: {fileID: 1513289877663170912}
+  - component: {fileID: 7287244830093586845}
   m_Layer: 0
   m_Name: Passport_Interactable
   m_TagString: Untagged
@@ -197,6 +198,24 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &7287244830093586845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 625399996317877177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6865a47a0ffb81749a21187667504ce1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  passportText: {fileID: 3882093350598682922}
+  currentGameYear: 2026
+  expirationProbability: 0.35
+  isExpired: 0
+  currentFirstName: 
+  currentLastName: 
 --- !u!1 &831206329667958634
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,7 +651,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c2ad4ecb79e2b43448e63e3cf4b03645, type: 2}
+  - {fileID: 2100000, guid: f37f9e0c87a855a43bd6fa39c1619d23, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
