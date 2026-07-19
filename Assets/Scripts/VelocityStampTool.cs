@@ -157,5 +157,13 @@ public class VelocityStampTool : MonoBehaviour
         {
             Debug.LogError("<color=red>HAPTICS ΣΦΑΛΜΑ:</color> ΔΕΝ βρέθηκε πουθενά το HapticImpulsePlayer.");
         }
+
+        // --- ΝΕΟΣ ΚΩΔΙΚΑΣ: Ειδοποιούμε τον NPC ότι σφραγίσαμε ---
+        NPCController currentNPC = FindObjectOfType<NPCController>();
+        if (currentNPC != null)
+        {
+            currentNPC.DocumentWasStamped();
+        }
+        // --------------------------------------------------------
     }
 }
