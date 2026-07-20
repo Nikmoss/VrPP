@@ -4,9 +4,8 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 /// <summary>
-/// Εργαλείο σφραγίδας. Ανιχνεύει τη σύγκρουση με το έγγραφο 
-/// ΜΟΝΟ αν η ταχύτητα κίνησης ξεπερνά το όριο.
-/// Περιλαμβάνει Αναλυτικό Διαγνωστικό Σύστημα για το Haptic Feedback.
+/// Εργαλείο σφραγίδας. Ανιχνεύει τη σύγκρουση, παίζει haptics
+/// και καταγράφει την απόφαση πάνω στο έγγραφο (χωρίς να δίνει άμεσα σκορ).
 /// </summary>
 public class VelocityStampTool : MonoBehaviour
 {
@@ -18,23 +17,15 @@ public class VelocityStampTool : MonoBehaviour
     [Tooltip("Το γραφικό (Prefab - Quad) που θα τυπωθεί πάνω στο χαρτί.")]
     [SerializeField] private GameObject stampMarkPrefab;
 
-    [Tooltip("Ο ήχος της σφραγίδας (ΓΚΑΠ!).")]
     [SerializeField] private AudioSource stampAudioSource;
-
-    [Tooltip("Ο ελάχιστος χρόνος μεταξύ σφραγισμάτων.")]
     [SerializeField] private float stampCooldown = 0.5f;
 
     [Header("Ρυθμίσεις Φυσικής & Ταχύτητας")]
-    [Tooltip("Η ελάχιστη ταχύτητα (m/s) για να καταγραφεί ως χτύπημα. Προτείνεται 0.4")]
     [SerializeField] private float minimumVelocityThreshold = 0.4f;
 
     [Header("Ανάδραση: Δόνηση Χειριστηρίου (Haptics)")]
-    [Tooltip("Ενεργοποιεί τη δόνηση στο χέρι που κρατάει τη σφραγίδα.")]
     [SerializeField] private bool enableHaptics = true;
-    [Range(0f, 1f)]
-    [Tooltip("Ένταση δόνησης (0 έως 1). Το 1 είναι η μέγιστη δύναμη.")]
-    [SerializeField] private float hapticAmplitude = 0.8f;
-    [Tooltip("Διάρκεια δόνησης σε δευτερόλεπτα.")]
+    [Range(0f, 1f)][SerializeField] private float hapticAmplitude = 0.8f;
     [SerializeField] private float hapticDuration = 0.15f;
 
     private float lastStampTime = 0f;
@@ -43,7 +34,6 @@ public class VelocityStampTool : MonoBehaviour
 
     private void Awake()
     {
-        // Ψάχνουμε το XRGrabInteractable προς τα πάνω στην ιεραρχία
         grabInteractable = GetComponentInParent<XRGrabInteractable>();
         stampRigidbody = GetComponentInParent<Rigidbody>();
     }
@@ -51,8 +41,6 @@ public class VelocityStampTool : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (Time.time - lastStampTime < stampCooldown) return;
-
-        // Αν υπάρχει XRGrabInteractable, βεβαιωνόμαστε ότι το κρατάει ο παίκτης
         if (grabInteractable != null && !grabInteractable.isSelected) return;
 
         float currentVelocity = 0f;
@@ -61,10 +49,7 @@ public class VelocityStampTool : MonoBehaviour
             currentVelocity = stampRigidbody.linearVelocity.magnitude;
         }
 
-        if (currentVelocity < minimumVelocityThreshold)
-        {
-            return;
-        }
+        if (currentVelocity < minimumVelocityThreshold) return;
 
         DocumentInteractable document = other.GetComponentInParent<DocumentInteractable>();
         if (document != null)
@@ -78,10 +63,7 @@ public class VelocityStampTool : MonoBehaviour
     {
         lastStampTime = Time.time;
 
-        if (stampAudioSource != null)
-        {
-            stampAudioSource.Play();
-        }
+        if (stampAudioSource != null) stampAudioSource.Play();
 
         if (stampMarkPrefab != null)
         {
@@ -92,78 +74,31 @@ public class VelocityStampTool : MonoBehaviour
             newMark.transform.SetParent(hitPageTransform, true);
         }
 
-        // Ενεργοποίηση Δόνησης με αναλυτικό έλεγχο
         TriggerHaptics();
 
-        Debug.Log($"<color=green>Επιτυχές χτύπημα!</color> Τυπώθηκε: {decisionType}");
-
-        CheckpointStateMachine stateMachine = FindObjectOfType<CheckpointStateMachine>();
-        if (stateMachine != null)
-        {
-            stateMachine.ChangeState(CheckpointStateMachine.CheckpointState.Stamped);
-        }
-    }
-
-    /// <summary>
-    /// Στέλνει εντολή δόνησης και τυπώνει αναλυτικά βήματα στην κονσόλα.
-    /// </summary>
-    private void TriggerHaptics()
-    {
-        Debug.Log("<color=yellow>HAPTICS:</color> Ξεκινάει ο έλεγχος δόνησης...");
-
-        if (!enableHaptics)
-        {
-            Debug.LogWarning("<color=orange>HAPTICS ΑΚΥΡΩΣΗ:</color> Το κουτάκι 'Enable Haptics' είναι ξε-τικαρισμένο στον Inspector.");
-            return;
-        }
-
-        if (grabInteractable == null)
-        {
-            Debug.LogError("<color=red>HAPTICS ΣΦΑΛΜΑ:</color> Το script δεν βρίσκει το XRGrabInteractable! Βεβαιώσου ότι το VelocityStampTool είναι παιδί του αντικειμένου που έχει το XRGrabInteractable.");
-            return;
-        }
-
-        if (grabInteractable.interactorsSelecting.Count == 0)
-        {
-            Debug.LogWarning("<color=orange>HAPTICS ΑΚΥΡΩΣΗ:</color> Το αντικείμενο δεν φαίνεται να κρατιέται από κανένα χέρι αυτή τη στιγμή.");
-            return;
-        }
-
-        bool foundPlayer = false;
-
-        foreach (var interactor in grabInteractable.interactorsSelecting)
-        {
-            // Ψάχνουμε το HapticImpulsePlayer
-            HapticImpulsePlayer hapticPlayer = interactor.transform.GetComponentInParent<HapticImpulsePlayer>();
-
-            if (hapticPlayer == null)
-            {
-                hapticPlayer = interactor.transform.GetComponentInChildren<HapticImpulsePlayer>();
-            }
-
-            if (hapticPlayer != null)
-            {
-                hapticPlayer.SendHapticImpulse(hapticAmplitude, hapticDuration);
-                Debug.Log("<color=cyan>HAPTICS ΕΠΙΤΥΧΙΑ:</color> Το σήμα δόνησης στάλθηκε στον Controller!");
-                foundPlayer = true;
-            }
-            else
-            {
-                Debug.LogWarning($"<color=orange>HAPTICS:</color> Δεν βρέθηκε HapticImpulsePlayer στο χέρι: {interactor.transform.name}");
-            }
-        }
-
-        if (!foundPlayer)
-        {
-            Debug.LogError("<color=red>HAPTICS ΣΦΑΛΜΑ:</color> ΔΕΝ βρέθηκε πουθενά το HapticImpulsePlayer.");
-        }
-
-        // --- ΝΕΟΣ ΚΩΔΙΚΑΣ: Ειδοποιούμε τον NPC ότι σφραγίσαμε ---
+        // Ειδοποίηση του NPC ότι έπεσε σφραγίδα (για να ξέρει ότι μπορεί να πάρει το χαρτί αν μπει στο Socket)
         NPCController currentNPC = FindObjectOfType<NPCController>();
         if (currentNPC != null)
         {
             currentNPC.DocumentWasStamped();
         }
-        // --------------------------------------------------------
+
+        // --- ΝΕΟ: Απλά καταγράφουμε την απόφαση στο χαρτί! ---
+        DynamicPassport dynamicPassport = document.GetComponent<DynamicPassport>();
+        if (dynamicPassport != null)
+        {
+            dynamicPassport.SetStampDecision(decisionType);
+        }
+    }
+
+    private void TriggerHaptics()
+    {
+        if (!enableHaptics || grabInteractable == null) return;
+        foreach (var interactor in grabInteractable.interactorsSelecting)
+        {
+            HapticImpulsePlayer hapticPlayer = interactor.transform.GetComponentInParent<HapticImpulsePlayer>();
+            if (hapticPlayer == null) hapticPlayer = interactor.transform.GetComponentInChildren<HapticImpulsePlayer>();
+            if (hapticPlayer != null) hapticPlayer.SendHapticImpulse(hapticAmplitude, hapticDuration);
+        }
     }
 }

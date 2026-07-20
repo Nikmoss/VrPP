@@ -5,6 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 /// <summary>
 /// Διαχειρίζεται το "Φασόλι". Περιμένει το χτύπημα ΚΑΙ την επιστροφή του χαρτιού στο γραφείο.
+/// Στο τέλος υπολογίζει το σκορ βάσει της τελευταίας σφραγίδας που μπήκε.
 /// </summary>
 public class NPCController : MonoBehaviour
 {
@@ -18,7 +19,6 @@ public class NPCController : MonoBehaviour
     private GameObject currentPassport;
     private bool isStamped = false;
 
-    // Η μέθοδος Setup καλείται από τον Manager μόλις γεννηθεί ο NPC
     public void Setup(Transform spawn, Transform window, Transform exit, GameObject passport, XRSocketInteractor socket)
     {
         spawnPoint = spawn;
@@ -49,18 +49,28 @@ public class NPCController : MonoBehaviour
         }
 
         // 3. ΠΕΡΙΜΕΝΕΙ ΓΙΑ ΤΗ ΣΦΡΑΓΙΔΑ ***ΚΑΙ*** ΝΑ ΜΠΕΙ ΞΑΝΑ ΣΤΟ SOCKET
-        // Σταματάει εδώ μέχρι και τα δύο να είναι TRUE.
         while (!isStamped || !deskSocket.hasSelection)
         {
             yield return null;
         }
 
         // 4. ΟΚ! Το χαρτί σφραγίστηκε και αφέθηκε στο γραφείο. 
-        yield return new WaitForSeconds(1.0f); // Περιμένει 1 δευτερόλεπτο για ρεαλισμό
+        yield return new WaitForSeconds(1.0f);
 
-        // 5. ΠΑΙΡΝΕΙ ΤΟ ΔΙΑΒΑΤΗΡΙΟ
+        // 5. ΠΑΙΡΝΕΙ ΤΟ ΔΙΑΒΑΤΗΡΙΟ ΚΑΙ ΥΠΟΛΟΓΙΖΕΤΑΙ ΤΟ ΣΚΟΡ ΜΙΑ ΦΟΡΑ!
         if (currentPassport != null)
         {
+            DynamicPassport passportData = currentPassport.GetComponent<DynamicPassport>();
+            if (passportData != null && passportData.hasBeenStamped)
+            {
+                ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
+                if (scoreManager != null)
+                {
+                    // Περνάμε την ΤΕΛΕΥΤΑΙΑ απόφαση που σώθηκε στο χαρτί
+                    scoreManager.EvaluateDecision(passportData.lastAppliedStamp, passportData);
+                }
+            }
+
             Destroy(currentPassport);
         }
 
