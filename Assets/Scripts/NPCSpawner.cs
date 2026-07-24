@@ -1,46 +1,40 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-/// <summary>
-/// Το εργοστάσιο παραγωγής NPC. Μόλις φύγει ο ένας, στέλνει τον επόμενο.
-/// </summary>
 public class NPCSpawner : MonoBehaviour
 {
-    [Header("Ρυθμίσεις Spawner")]
-    public NPCController npcPrefab; // Το φασόλι από τα Assets
-    public GameObject passportPrefab; // Το διαβατήριο από τα Assets
+    [Header("NPC References")]
+    public GameObject npcPrefab;
+    public GameObject passportPrefab;
 
-    [Header("Σημεία Σκηνής")]
+    [Header("Waypoints")]
     public Transform spawnPoint;
     public Transform windowPoint;
     public Transform exitPoint;
-    public XRSocketInteractor deskSocket; // Το Passport_Socket
 
-    private void Start()
-    {
-        StartCoroutine(SpawnLoop());
-    }
+    [Header("Desk Setup")]
+    public XRSocketInteractor deskSocket;
 
-    private IEnumerator SpawnLoop()
+    private GameObject currentNPC;
+
+    // Αυτή η μέθοδος πλέον καλείται ΜΟΝΟ όταν ο παίκτης χτυπάει το γκονγκ
+    public void SpawnNextNPC()
     {
-        while (true)
+        // Ελέγχουμε αν υπάρχει ήδη πελάτης στο γκισέ
+        if (currentNPC != null)
         {
-            // 1. Γεννάμε έναν νέο NPC
-            NPCController newNPC = Instantiate(npcPrefab, spawnPoint.position, Quaternion.identity);
+            Debug.Log("Υπάρχει ήδη κάποιος στο γκισέ! Πρέπει να φύγει πρώτα.");
+            return;
+        }
 
-            // 2. Του δίνουμε τις οδηγίες του (σημεία και αντικείμενα)
-            newNPC.Setup(spawnPoint, windowPoint, exitPoint, passportPrefab, deskSocket);
+        // Δημιουργία του νέου NPC
+        currentNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation);
 
-            // 3. Περιμένουμε όσο αυτός ο NPC υπάρχει στη σκηνή (μέχρι να καταστραφεί)
-            while (newNPC != null)
-            {
-                yield return null;
-            }
-
-            // 4. Ο NPC έφυγε. Περιμένουμε 3 δευτερόλεπτα (ανάσα) και στέλνουμε τον επόμενο!
-            yield return new WaitForSeconds(3f);
+        NPCController controller = currentNPC.GetComponent<NPCController>();
+        if (controller != null)
+        {
+            controller.Setup(spawnPoint, windowPoint, exitPoint, passportPrefab, deskSocket);
         }
     }
 }
