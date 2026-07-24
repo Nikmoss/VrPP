@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
@@ -16,17 +17,37 @@ public class NPCSpawner : MonoBehaviour
     [Header("Desk Setup")]
     public XRSocketInteractor deskSocket;
 
-    private GameObject currentNPC;
+    [Header("Timing")]
+    public float spawnDelay = 1.0f; // Ο χρόνος καθυστέρησης (1 δευτερόλεπτο)
 
-    // Αυτή η μέθοδος πλέον καλείται ΜΟΝΟ όταν ο παίκτης χτυπάει το γκονγκ
+    private GameObject currentNPC;
+    private bool isSpawning = false; // Ασφάλεια για να μην σπαμάρουμε πελάτες
+
     public void SpawnNextNPC()
     {
-        // Ελέγχουμε αν υπάρχει ήδη πελάτης στο γκισέ
+        // 1. Ελέγχουμε αν υπάρχει ήδη πελάτης στο γκισέ
         if (currentNPC != null)
         {
             Debug.Log("Υπάρχει ήδη κάποιος στο γκισέ! Πρέπει να φύγει πρώτα.");
             return;
         }
+
+        // 2. Ελέγχουμε αν βρισκόμαστε ήδη στη φάση αναμονής (για να μην διπλο-καλεστεί)
+        if (isSpawning)
+        {
+            return;
+        }
+
+        // Ξεκινάμε τη διαδικασία με την καθυστέρηση
+        StartCoroutine(SpawnWithDelayRoutine());
+    }
+
+    private IEnumerator SpawnWithDelayRoutine()
+    {
+        isSpawning = true;
+
+        // Η παύση: Περιμένουμε τον χρόνο που ορίσαμε (1 δευτερόλεπτο)
+        yield return new WaitForSeconds(spawnDelay);
 
         // Δημιουργία του νέου NPC
         currentNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation);
@@ -36,5 +57,7 @@ public class NPCSpawner : MonoBehaviour
         {
             controller.Setup(spawnPoint, windowPoint, exitPoint, passportPrefab, deskSocket);
         }
+
+        isSpawning = false;
     }
 }
