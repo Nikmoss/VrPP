@@ -212,10 +212,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   passportText: {fileID: 3882093350598682922}
   currentGameYear: 2026
-  expirationProbability: 0.35
+  expirationProbability: 0.39
   isExpired: 0
   currentFirstName: 
   currentLastName: 
+  hasBeenStamped: 0
+  lastAppliedStamp: 0
 --- !u!1 &831206329667958634
 GameObject:
   m_ObjectHideFlags: 0
@@ -230,7 +232,7 @@ GameObject:
   - component: {fileID: 5910883338384661046}
   m_Layer: 0
   m_Name: Base_Pages
-  m_TagString: Untagged
+  m_TagString: Document
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -326,8 +328,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 0.86602914, y: 1, z: 0.8777782}
+  m_Center: {x: -0.018552193, y: 0, z: -0.0053362176}
 --- !u!1 &2879743915853556160
 GameObject:
   m_ObjectHideFlags: 0
