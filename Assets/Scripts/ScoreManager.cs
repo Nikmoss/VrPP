@@ -19,35 +19,22 @@ public class ScoreManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Καλείται από τη σφραγίδα μόλις χτυπήσει το έγγραφο.
+    /// Καλείται από τον NPCController όταν η τελική απόφαση (για 1 ή 2 χαρτιά) είναι ΣΩΣΤΗ.
     /// </summary>
-    public void EvaluateDecision(VelocityStampTool.StampDecision decision, DynamicPassport passport)
+    public void AddScore()
     {
-        bool isCorrect = false;
+        currentScore++;
+        Debug.Log($"<color=green>ΣΩΣΤΟ!</color> Σκορ: {currentScore}");
+        UpdateScoreUI();
+    }
 
-        // ΛΟΓΙΚΗ 1: Εγκρίθηκε (Approved) και το διαβατήριο ΔΕΝ έχει λήξει
-        if (decision == VelocityStampTool.StampDecision.Approved && !passport.isExpired)
-        {
-            isCorrect = true;
-        }
-        // ΛΟΓΙΚΗ 2: Απορρίφθηκε (Denied) και το διαβατήριο ΕΙΧΕ λήξει
-        else if (decision == VelocityStampTool.StampDecision.Denied && passport.isExpired)
-        {
-            isCorrect = true;
-        }
-
-        // Εφαρμογή πόντων
-        if (isCorrect)
-        {
-            currentScore++;
-            Debug.Log($"<color=green>ΣΩΣΤΟ!</color> Σκορ: {currentScore}");
-        }
-        else
-        {
-            currentScore--;
-            Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Σκορ: {currentScore}");
-        }
-
+    /// <summary>
+    /// Καλείται από τον NPCController όταν η τελική απόφαση (για 1 ή 2 χαρτιά) είναι ΛΑΘΟΣ.
+    /// </summary>
+    public void SubtractScore()
+    {
+        currentScore--;
+        Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Σκορ: {currentScore}");
         UpdateScoreUI();
     }
 

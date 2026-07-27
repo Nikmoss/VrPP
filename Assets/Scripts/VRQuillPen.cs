@@ -125,23 +125,42 @@ public class VRQuillPen : MonoBehaviour
         paperHasBeenRejected = true;
         Debug.Log("Το έγγραφο σημειώθηκε με την πένα! ΑΠΟΡΡΙΠΤΕΤΑΙ.");
 
-        // Ψάχνουμε το script παντού (στον ίδιο, στους γονείς, στα παιδιά)
+        bool documentFound = false;
+
+        // --- 1. Έλεγχος για Διαβατήριο ---
         DynamicPassport passport = currentPaper.GetComponentInParent<DynamicPassport>();
         if (passport == null)
         {
             passport = currentPaper.GetComponentInChildren<DynamicPassport>();
         }
 
-        // Αν το βρήκαμε, περνάμε τη βαθμολογία
         if (passport != null)
         {
             passport.hasBeenStamped = true;
             passport.lastAppliedStamp = penDecision;
             Debug.Log($"<color=orange>Η Πένα βρήκε το διαβατήριο και έστειλε απόφαση: {penDecision}</color>");
+            documentFound = true;
         }
-        else
+
+        // --- 2. Έλεγχος για Άδεια Εμπόρου ---
+        MerchantPermit permit = currentPaper.GetComponentInParent<MerchantPermit>();
+        if (permit == null)
         {
-            Debug.LogError("<color=red>ΣΦΑΛΜΑ: Η πένα ζωγράφισε, αλλά δεν μπόρεσε να βρει το script 'DynamicPassport' πάνω στο χαρτί ή στους γονείς του!</color>");
+            permit = currentPaper.GetComponentInChildren<MerchantPermit>();
+        }
+
+        if (permit != null)
+        {
+            permit.hasBeenStamped = true;
+            permit.lastAppliedStamp = penDecision;
+            Debug.Log($"<color=orange>Η Πένα βρήκε την Άδεια Εμπόρου και έστειλε απόφαση: {penDecision}</color>");
+            documentFound = true;
+        }
+
+        // Αν δεν βρήκε κανένα από τα δύο
+        if (!documentFound)
+        {
+            Debug.LogError("<color=red>ΣΦΑΛΜΑ: Η πένα ζωγράφισε, αλλά δεν μπόρεσε να βρει ούτε Διαβατήριο ούτε Άδεια στο χαρτί!</color>");
         }
 
         NPCController currentNPC = FindObjectOfType<NPCController>();

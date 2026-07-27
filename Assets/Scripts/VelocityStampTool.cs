@@ -1,5 +1,4 @@
 using UnityEngine;
-
 using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
@@ -76,18 +75,25 @@ public class VelocityStampTool : MonoBehaviour
 
         TriggerHaptics();
 
-        // Ειδοποίηση του NPC ότι έπεσε σφραγίδα (για να ξέρει ότι μπορεί να πάρει το χαρτί αν μπει στο Socket)
+        // Ειδοποίηση του NPC ότι έπεσε σφραγίδα
         NPCController currentNPC = FindObjectOfType<NPCController>();
         if (currentNPC != null)
         {
             currentNPC.DocumentWasStamped();
         }
 
-        // --- ΝΕΟ: Απλά καταγράφουμε την απόφαση στο χαρτί! ---
+        // --- ΚΑΤΑΓΡΑΦΗ ΑΠΟΦΑΣΗΣ ΓΙΑ ΔΙΑΒΑΤΗΡΙΟ ---
         DynamicPassport dynamicPassport = document.GetComponent<DynamicPassport>();
         if (dynamicPassport != null)
         {
             dynamicPassport.SetStampDecision(decisionType);
+        }
+
+        // --- ΝΕΟ: ΚΑΤΑΓΡΑΦΗ ΑΠΟΦΑΣΗΣ ΓΙΑ ΑΔΕΙΑ ΕΜΠΟΡΟΥ ---
+        MerchantPermit merchantPermit = document.GetComponent<MerchantPermit>();
+        if (merchantPermit != null)
+        {
+            merchantPermit.SetStampDecision(decisionType);
         }
     }
 
