@@ -212,7 +212,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   passportText: {fileID: 3882093350598682922}
   currentGameYear: 2026
-  expirationProbability: 0.39
+  expirationProbability: 0.205
   isExpired: 0
   currentFirstName: 
   currentLastName: 

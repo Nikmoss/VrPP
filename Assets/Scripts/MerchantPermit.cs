@@ -20,39 +20,43 @@ public class MerchantPermit : MonoBehaviour
     public bool hasBeenStamped = false;
     public VelocityStampTool.StampDecision lastAppliedStamp;
 
-    // Ίδιες λίστες με το Passport για να υπάρχουν πιθανότητες να ταιριάζουν
     private readonly string[] firstNames = { "GREGOR", "IVAN", "ANNA", "MARIA", "DMITRI", "ELENA", "BORIS", "NATALIA", "YURI", "KATYA" };
     private readonly string[] lastNames = { "IVANOV", "SMIRNOV", "POPOV", "SOKOLOV", "VOLKOV", "KOZLOV", "MOROZOV", "NOVIKOV", "PETROV" };
-
-    // Η νέα λίστα με τα εμπορεύματα
     private readonly string[] goodsList = { "ΞΥΛΕΙΑ", "ΣΙΔΗΡΟΣ", "ΣΙΤΑΡΙ", "ΚΡΑΣΙ", "ΜΠΑΧΑΡΙΚΑ", "ΓΟΥΝΕΣ", "ΟΠΛΑ", "ΥΦΑΣΜΑΤΑ" };
 
-    private void Start()
+    // ΑΛΛΑΓΗ: Το Awake εκτελείται ακαριαία πριν από τον έλεγχο του NPC
+    private void Awake()
     {
         GenerateData();
     }
 
-    private void GenerateData()
+    public void GenerateData()
     {
-        // Επιλογή τυχαίων στοιχείων
         currentFirstName = firstNames[Random.Range(0, firstNames.Length)];
         currentLastName = lastNames[Random.Range(0, lastNames.Length)];
         currentGoods = goodsList[Random.Range(0, goodsList.Length)];
 
-        // Ενημέρωση του UI Text όπως ακριβώς και στο Passport
-        if (permitText != null)
-        {
-            permitText.text = $"ΟΝΟΜΑ: {currentFirstName}\nΕΠΙΘΕΤΟ: {currentLastName}\nΕΜΠΟΡΕΥΜΑ: {currentGoods}";
-        }
+        UpdateUI();
     }
 
-    /// <summary>
-    /// Καλείται από τη σφραγίδα κάθε φορά που χτυπάει το χαρτί.
-    /// Αποθηκεύει ΠΑΝΤΑ την τελευταία απόφαση.
-    /// </summary>
     public void SetStampDecision(VelocityStampTool.StampDecision decision)
     {
         hasBeenStamped = true;
         lastAppliedStamp = decision;
+    }
+
+    public void ForceNames(string fName, string lName)
+    {
+        currentFirstName = fName;
+        currentLastName = lName;
+        UpdateUI();
+    }
+
+    private void UpdateUI()
+    {
+        if (permitText != null)
+        {
+            permitText.text = $"ΟΝΟΜΑ: {currentFirstName}\nΕΠΙΘΕΤΟ: {currentLastName}\nΕΜΠΟΡΕΥΜΑ: {currentGoods}";
+        }
     }
 }

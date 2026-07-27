@@ -27,7 +27,8 @@ public class DynamicPassport : MonoBehaviour
     private readonly string[] firstNames = { "GREGOR", "IVAN", "ANNA", "MARIA", "DMITRI", "ELENA", "BORIS", "NATALIA", "YURI", "KATYA" };
     private readonly string[] lastNames = { "IVANOV", "SMIRNOV", "POPOV", "SOKOLOV", "VOLKOV", "KOZLOV", "MOROZOV", "NOVIKOV", "PETROV" };
 
-    private void Start()
+    // ΑΛΛΑΓΗ: Το Awake εκτελείται ακαριαία όταν γίνεται το Instantiate
+    private void Awake()
     {
         GenerateData();
     }
@@ -60,10 +61,6 @@ public class DynamicPassport : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Καλείται από τη σφραγίδα κάθε φορά που χτυπάει το χαρτί.
-    /// Αποθηκεύει ΠΑΝΤΑ την τελευταία απόφαση.
-    /// </summary>
     public void SetStampDecision(VelocityStampTool.StampDecision decision)
     {
         hasBeenStamped = true;

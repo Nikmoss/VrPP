@@ -6,6 +6,11 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class NPCController : MonoBehaviour
 {
+    [Header("Ρυθμίσεις Δυσκολίας")]
+    [Range(0f, 1f)]
+    [Tooltip("Η πιθανότητα (0.0 έως 1.0) τα ονόματα του εμπόρου να ΔΕΝ ταιριάζουν.")]
+    public float mismatchProbability = 0.3f;
+
     private Transform spawnPoint;
     private Transform windowPoint;
     private Transform exitPoint;
@@ -39,13 +44,41 @@ public class NPCController : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
+        // 1. Γεννάμε τα χαρτιά
         spawnedDocuments.Clear();
+        DynamicPassport spawnedPassport = null;
+        MerchantPermit spawnedPermit = null;
+
         for (int i = 0; i < documentPrefabs.Length; i++)
         {
             if (documentPrefabs[i] != null && clientSockets[i] != null)
             {
                 GameObject doc = Instantiate(documentPrefabs[i], clientSockets[i].transform.position, clientSockets[i].transform.rotation);
                 spawnedDocuments.Add(doc);
+
+                if (doc.GetComponent<DynamicPassport>() != null) spawnedPassport = doc.GetComponent<DynamicPassport>();
+                if (doc.GetComponent<MerchantPermit>() != null) spawnedPermit = doc.GetComponent<MerchantPermit>();
+            }
+        }
+
+        // 2. Λογική Πιθανοτήτων: Ελέγχουμε αν τα ονόματα θα ταιριάζουν ή όχι
+        if (spawnedPassport != null && spawnedPermit != null)
+        {
+            bool shouldMismatch = Random.value < mismatchProbability;
+
+            if (!shouldMismatch)
+            {
+                // Επιβάλλουμε τα ονόματα να είναι ΙΔΙΑ με του διαβατηρίου (Κανονικός Έμπορος)
+                spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+            }
+            else
+            {
+                // Επιβάλλουμε να είναι ΔΙΑΦΟΡΕΤΙΚΑ (Πλαστογράφος)
+                while (spawnedPermit.currentFirstName == spawnedPassport.currentFirstName &&
+                       spawnedPermit.currentLastName == spawnedPassport.currentLastName)
+                {
+                    spawnedPermit.GenerateData(); // Ξαναδιαλέγει τυχαία μέχρι να μην ταιριάζουν
+                }
             }
         }
 
@@ -102,15 +135,13 @@ public class NPCController : MonoBehaviour
         DynamicPassport passport = null;
         MerchantPermit permit = null;
 
-        // Βρίσκουμε τον ScoreManager στη σκηνή
         ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
 
         if (scoreManager == null)
         {
-            Debug.LogError("<color=red>ΣΦΑΛΜΑ:</color> Δεν μπόρεσα να βρω το ScoreManager! Σιγουρέψου ότι υπάρχει στη σκηνή και είναι ενεργοποιημένο.");
+            Debug.LogError("<color=red>ΣΦΑΛΜΑ:</color> Δεν μπόρεσα να βρω το ScoreManager!");
         }
 
-        // Ελέγχουμε τι έγγραφα βρίσκονται στα Sockets
         foreach (var socket in clientSockets)
         {
             if (socket != null && socket.hasSelection)
@@ -125,43 +156,48 @@ public class NPCController : MonoBehaviour
             }
         }
 
-        // ΣΕΝΑΡΙΟ 1: Έμπορος (2 Χαρτιά)
+        // --- ΣΕΝΑΡΙΟ 1: Έμπορος (2 Χαρτιά) ---
         if (passport != null && permit != null)
         {
-            // Για να είναι σωστός ο έμπορος πρέπει και τα ονόματα να ταιριάζουν ΚΑΙ να μην έχει λήξει
             bool namesMatch = (passport.currentFirstName == permit.currentFirstName) &&
                               (passport.currentLastName == permit.currentLastName);
             bool isNotExpired = !passport.isExpired;
 
+            // ΠΡΕΠΕΙ να ισχύουν ΚΑΙ ΤΑ ΔΥΟ (ίδια ονόματα & έγκυρο) για να περάσει!
             bool shouldBeApproved = namesMatch && isNotExpired;
 
-            // Ελέγχουμε αν ο παίκτης έβαλε έγκριση και στα 2
-            bool bothApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved &&
-                                 permit.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
+            // Ο παίκτης θεωρείται ότι "Ενέκρινε" αν έβαλε τη σφραγίδα Approved ΚΑΙ στα 2.
+            // Αν απέρριψε έστω και ένα (ή και τα 2), θεωρείται ότι έβγαλε απόφαση "Απόρριψης".
+            bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved &&
+                                   permit.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
-            if (shouldBeApproved && bothApproved)
+            if (shouldBeApproved && playerApproved)
             {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ονόματα OK και έγκυρο. Εγκρίθηκαν και τα 2.");
+                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ονόματα ίδια ΚΑΙ έγκυρο. Το ενέκρινες.");
                 if (scoreManager != null) scoreManager.AddScore();
             }
-            else if (!shouldBeApproved && !bothApproved)
+            else if (!shouldBeApproved && !playerApproved)
             {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Βρήκες το λάθος (ονόματα ή λήξη) και τα απέρριψες!");
+                if (!namesMatch)
+                    Debug.Log("<color=green>ΣΩΣΤΟ!</color> Βρήκες τα διαφορετικά ονόματα και το απέρριψες!");
+                else
+                    Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ίδια ονόματα, ΑΛΛΑ ήταν ληγμένο και το απέρριψες!");
+
                 if (scoreManager != null) scoreManager.AddScore();
             }
             else
             {
-                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Η απόφασή σου δεν ήταν σωστή για τον έμπορο.");
+                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Η απόφασή σου ήταν λανθασμένη.");
                 if (scoreManager != null) scoreManager.SubtractScore();
             }
         }
-        // ΣΕΝΑΡΙΟ 2: Απλός Πολίτης (1 Χαρτί - Διαβατήριο)
+        // --- ΣΕΝΑΡΙΟ 2: Απλός Πολίτης (1 Χαρτί - Διαβατήριο) ---
         else if (passport != null)
         {
             bool shouldBeApproved = !passport.isExpired;
-            bool isApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
+            bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
-            if (shouldBeApproved == isApproved)
+            if (shouldBeApproved == playerApproved)
             {
                 Debug.Log("<color=green>ΣΩΣΤΟ!</color> Σωστή απόφαση για το διαβατήριο.");
                 if (scoreManager != null) scoreManager.AddScore();

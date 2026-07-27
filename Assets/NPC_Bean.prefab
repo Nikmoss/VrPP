@@ -127,9 +127,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0c2af96f3d8cdc479dcdf66d963ef17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  spawnPoint: {fileID: 0}
-  windowPoint: {fileID: 0}
-  exitPoint: {fileID: 0}
-  moveSpeed: 1.5
-  passportPrefab: {fileID: 625399996317877177, guid: cdedb1dbb3302e340b65d3c0b9c31d1d, type: 3}
-  deskSpawnPoint: {fileID: 0}
+  mismatchProbability: 0.307
