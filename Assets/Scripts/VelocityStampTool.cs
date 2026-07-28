@@ -3,19 +3,30 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs.Haptics;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 /// <summary>
-/// Εργαλείο σφραγίδας. Ανιχνεύει τη σύγκρουση, παίζει haptics
-/// και καταγράφει την απόφαση πάνω στο έγγραφο (χωρίς να δίνει άμεσα σκορ).
+/// Εργαλείο σφραγίδας. Ανιχνεύει τη σύγκρουση, παίζει haptics, 
+/// τυπώνει το σωστό γραφικό ανάλογα με το μελάνι και καταγράφει την απόφαση.
 /// </summary>
 public class VelocityStampTool : MonoBehaviour
 {
-    public enum StampDecision { Approved, Denied }
+    public enum StampDecision { None, Approved, Denied }
 
-    [Header("Ρυθμίσεις Απόφασης")]
-    public StampDecision decisionType;
+    [Header("Κατάσταση Σφραγίδας")]
+    [Tooltip("Το τρέχον μελάνι που έχει πάρει η σφραγίδα. Πρέπει να τη βουτήξεις!")]
+    public StampDecision currentInk = StampDecision.None;
 
-    [Tooltip("Το γραφικό (Prefab - Quad) που θα τυπωθεί πάνω στο χαρτί.")]
-    [SerializeField] private GameObject stampMarkPrefab;
+    [Header("Οπτική Ένδειξη Μελανιού (Σφουγγαράκι)")]
+    [SerializeField] private MeshRenderer stampTipRenderer;
+    [SerializeField] private Material defaultMaterial;
+    [SerializeField] private Material approvedMaterial;
+    [SerializeField] private Material deniedMaterial;
 
+    [Header("Γραφικά Σφραγίδας (Decals στο χαρτί)")]
+    [Tooltip("Το γραφικό που θα τυπωθεί για ΕΓΚΡΙΣΗ (π.χ. πράσινο/μαύρο).")]
+    [SerializeField] private GameObject approvedMarkPrefab;
+    [Tooltip("Το γραφικό που θα τυπωθεί για ΑΠΟΡΡΙΨΗ (π.χ. κόκκινο).")]
+    [SerializeField] private GameObject deniedMarkPrefab;
+
+    [Header("Ήχος & Cooldown")]
     [SerializeField] private AudioSource stampAudioSource;
     [SerializeField] private float stampCooldown = 0.5f;
 
@@ -37,8 +48,26 @@ public class VelocityStampTool : MonoBehaviour
         stampRigidbody = GetComponentInParent<Rigidbody>();
     }
 
+    // --- ΝΕΑ ΜΕΘΟΔΟΣ ΓΙΑ ΤΟ ΤΑΜΠΟΝ ---
+    // Καλείται από το script InkPadZone όταν ακουμπάς το μελάνι
+    public void DipInInk(StampDecision newInk)
+    {
+        currentInk = newInk;
+
+        if (stampTipRenderer != null)
+        {
+            if (currentInk == StampDecision.Approved && approvedMaterial != null)
+                stampTipRenderer.material = approvedMaterial;
+            else if (currentInk == StampDecision.Denied && deniedMaterial != null)
+                stampTipRenderer.material = deniedMaterial;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
+        // Αν δεν έχει πάρει μελάνι (None), δεν μπορεί να σφραγίσει τίποτα!
+        if (currentInk == StampDecision.None) return;
+
         if (Time.time - lastStampTime < stampCooldown) return;
         if (grabInteractable != null && !grabInteractable.isSelected) return;
 
@@ -64,9 +93,12 @@ public class VelocityStampTool : MonoBehaviour
 
         if (stampAudioSource != null) stampAudioSource.Play();
 
-        if (stampMarkPrefab != null)
+        // --- ΕΠΙΛΟΓΗ ΣΩΣΤΟΥ ΓΡΑΦΙΚΟΥ (DECAL) ---
+        GameObject prefabToInstantiate = (currentInk == StampDecision.Approved) ? approvedMarkPrefab : deniedMarkPrefab;
+
+        if (prefabToInstantiate != null)
         {
-            GameObject newMark = Instantiate(stampMarkPrefab);
+            GameObject newMark = Instantiate(prefabToInstantiate);
             newMark.transform.localScale = new Vector3(0.05f, 0.05f, 0.05f);
             newMark.transform.position = hitPosition + (hitPageTransform.up * 0.002f);
             newMark.transform.rotation = hitPageTransform.rotation * Quaternion.Euler(90f, 0f, 0f);
@@ -75,25 +107,30 @@ public class VelocityStampTool : MonoBehaviour
 
         TriggerHaptics();
 
-        // Ειδοποίηση του NPC ότι έπεσε σφραγίδα
         NPCController currentNPC = FindObjectOfType<NPCController>();
         if (currentNPC != null)
         {
             currentNPC.DocumentWasStamped();
         }
 
-        // --- ΚΑΤΑΓΡΑΦΗ ΑΠΟΦΑΣΗΣ ΓΙΑ ΔΙΑΒΑΤΗΡΙΟ ---
         DynamicPassport dynamicPassport = document.GetComponent<DynamicPassport>();
         if (dynamicPassport != null)
         {
-            dynamicPassport.SetStampDecision(decisionType);
+            dynamicPassport.SetStampDecision(currentInk);
         }
 
-        // --- ΝΕΟ: ΚΑΤΑΓΡΑΦΗ ΑΠΟΦΑΣΗΣ ΓΙΑ ΑΔΕΙΑ ΕΜΠΟΡΟΥ ---
         MerchantPermit merchantPermit = document.GetComponent<MerchantPermit>();
         if (merchantPermit != null)
         {
-            merchantPermit.SetStampDecision(decisionType);
+            merchantPermit.SetStampDecision(currentInk);
+        }
+
+        // --- ΑΔΕΙΑΣΜΑ ΜΕΛΑΝΙΟΥ ΓΙΑ ΡΕΑΛΙΣΜΟ ---
+        // Ο παίκτης πρέπει να ξαναβουτήξει τη σφραγίδα για το επόμενο χαρτί!
+        currentInk = StampDecision.None;
+        if (stampTipRenderer != null && defaultMaterial != null)
+        {
+            stampTipRenderer.material = defaultMaterial;
         }
     }
 
