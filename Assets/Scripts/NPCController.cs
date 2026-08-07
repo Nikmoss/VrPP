@@ -134,6 +134,7 @@ public class NPCController : MonoBehaviour
     {
         DynamicPassport passport = null;
         MerchantPermit permit = null;
+        MercenaryWrit writ = null; // ΝΕΟ: Αναφορά στο χαρτί του Στρατιώτη
 
         ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
 
@@ -153,6 +154,9 @@ public class NPCController : MonoBehaviour
 
                 if (item.GetComponent<MerchantPermit>() != null)
                     permit = item.GetComponent<MerchantPermit>();
+
+                if (item.GetComponent<MercenaryWrit>() != null)
+                    writ = item.GetComponent<MercenaryWrit>(); // ΝΕΟ: Εντοπισμός
             }
         }
 
@@ -163,11 +167,7 @@ public class NPCController : MonoBehaviour
                               (passport.currentLastName == permit.currentLastName);
             bool isNotExpired = !passport.isExpired;
 
-            // ΠΡΕΠΕΙ να ισχύουν ΚΑΙ ΤΑ ΔΥΟ (ίδια ονόματα & έγκυρο) για να περάσει!
             bool shouldBeApproved = namesMatch && isNotExpired;
-
-            // Ο παίκτης θεωρείται ότι "Ενέκρινε" αν έβαλε τη σφραγίδα Approved ΚΑΙ στα 2.
-            // Αν απέρριψε έστω και ένα (ή και τα 2), θεωρείται ότι έβγαλε απόφαση "Απόρριψης".
             bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved &&
                                    permit.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
@@ -187,11 +187,28 @@ public class NPCController : MonoBehaviour
             }
             else
             {
-                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Η απόφασή σου ήταν λανθασμένη.");
+                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Η απόφασή σου ήταν λανθασμένη για τον Έμπορο.");
                 if (scoreManager != null) scoreManager.SubtractScore();
             }
         }
-        // --- ΣΕΝΑΡΙΟ 2: Απλός Πολίτης (1 Χαρτί - Διαβατήριο) ---
+        // --- ΣΕΝΑΡΙΟ 2: Στρατιώτης (1 Χαρτί - Mercenary Writ) ---
+        else if (writ != null)
+        {
+            bool shouldBeApproved = !writ.isForged; // Αν δεν είναι πλαστό, πρέπει να εγκριθεί
+            bool playerApproved = (writ.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
+
+            if (shouldBeApproved == playerApproved)
+            {
+                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Σωστή απόφαση για τον Στρατιώτη.");
+                if (scoreManager != null) scoreManager.AddScore();
+            }
+            else
+            {
+                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Λάθος απόφαση για τον Στρατιώτη.");
+                if (scoreManager != null) scoreManager.SubtractScore();
+            }
+        }
+        // --- ΣΕΝΑΡΙΟ 3: Απλός Πολίτης (1 Χαρτί - Διαβατήριο) ---
         else if (passport != null)
         {
             bool shouldBeApproved = !passport.isExpired;
@@ -217,6 +234,10 @@ public class NPCController : MonoBehaviour
 
         MerchantPermit permit = item.GetComponent<MerchantPermit>();
         if (permit != null) return permit.hasBeenStamped;
+
+        // ΝΕΟ: Έλεγχος αν το στρατιωτικό χαρτί έχει σφραγιστεί/υπογραφεί
+        MercenaryWrit writ = item.GetComponent<MercenaryWrit>();
+        if (writ != null) return writ.hasBeenStamped;
 
         return false;
     }

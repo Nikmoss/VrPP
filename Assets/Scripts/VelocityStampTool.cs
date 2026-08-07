@@ -48,7 +48,6 @@ public class VelocityStampTool : MonoBehaviour
         stampRigidbody = GetComponentInParent<Rigidbody>();
     }
 
-    // --- ΝΕΑ ΜΕΘΟΔΟΣ ΓΙΑ ΤΟ ΤΑΜΠΟΝ ---
     // Καλείται από το script InkPadZone όταν ακουμπάς το μελάνι
     public void DipInInk(StampDecision newInk)
     {
@@ -65,7 +64,6 @@ public class VelocityStampTool : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Αν δεν έχει πάρει μελάνι (None), δεν μπορεί να σφραγίσει τίποτα!
         if (currentInk == StampDecision.None) return;
 
         if (Time.time - lastStampTime < stampCooldown) return;
@@ -113,20 +111,18 @@ public class VelocityStampTool : MonoBehaviour
             currentNPC.DocumentWasStamped();
         }
 
+        // --- ΕΝΗΜΕΡΩΣΗ ΤΩΝ ΕΓΓΡΑΦΩΝ ---
         DynamicPassport dynamicPassport = document.GetComponent<DynamicPassport>();
-        if (dynamicPassport != null)
-        {
-            dynamicPassport.SetStampDecision(currentInk);
-        }
+        if (dynamicPassport != null) dynamicPassport.SetStampDecision(currentInk);
 
         MerchantPermit merchantPermit = document.GetComponent<MerchantPermit>();
-        if (merchantPermit != null)
-        {
-            merchantPermit.SetStampDecision(currentInk);
-        }
+        if (merchantPermit != null) merchantPermit.SetStampDecision(currentInk);
 
-        // --- ΑΔΕΙΑΣΜΑ ΜΕΛΑΝΙΟΥ ΓΙΑ ΡΕΑΛΙΣΜΟ ---
-        // Ο παίκτης πρέπει να ξαναβουτήξει τη σφραγίδα για το επόμενο χαρτί!
+        // ΝΕΟ: Ενημέρωση του Στρατιωτικού Εγγράφου!
+        MercenaryWrit mercenaryWrit = document.GetComponent<MercenaryWrit>();
+        if (mercenaryWrit != null) mercenaryWrit.SetStampDecision(currentInk);
+
+        // --- ΑΔΕΙΑΣΜΑ ΜΕΛΑΝΙΟΥ ---
         currentInk = StampDecision.None;
         if (stampTipRenderer != null && defaultMaterial != null)
         {

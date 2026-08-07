@@ -809,15 +809,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCSpawner
   npcPrefab: {fileID: 6261405580052917043, guid: 73684d72da15547418a3b699444d436f, type: 3}
-  passportPrefab: {fileID: 625399996317877177, guid: a25d50c0c643b3b4b82f46e1af932f8d, type: 3}
+  passportPrefab: {fileID: 625399996317877177, guid: cdedb1dbb3302e340b65d3c0b9c31d1d, type: 3}
   merchantPermitPrefab: {fileID: 625399996317877177, guid: f3389203515305243b88afd62e679232, type: 3}
+  mercenaryWritPrefab: {fileID: 625399996317877177, guid: 373f1255d79ea024ba363a1ae30876b5, type: 3}
   spawnPoint: {fileID: 821767815}
   windowPoint: {fileID: 136658738}
   exitPoint: {fileID: 432524800}
   primarySocket: {fileID: 671527021}
   secondarySocket: {fileID: 1721701526}
   spawnDelay: 1
-  merchantProbability: 0
+  merchantProbability: 0.5
+  mercenaryProbability: 0.5
 --- !u!4 &322725816
 Transform:
   m_ObjectHideFlags: 0
@@ -1466,7 +1468,7 @@ MonoBehaviour:
   inkWidth: 0.005
   minSpacing: 0.005
   zFightingOffset: 0.001
-  inkPointsToReject: 35
+  inkPointsToReject: 25
   penDecision: 1
 --- !u!82 &554301907
 AudioSource:

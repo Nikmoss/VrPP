@@ -129,10 +129,7 @@ public class VRQuillPen : MonoBehaviour
 
         // --- 1. Έλεγχος για Διαβατήριο ---
         DynamicPassport passport = currentPaper.GetComponentInParent<DynamicPassport>();
-        if (passport == null)
-        {
-            passport = currentPaper.GetComponentInChildren<DynamicPassport>();
-        }
+        if (passport == null) passport = currentPaper.GetComponentInChildren<DynamicPassport>();
 
         if (passport != null)
         {
@@ -144,10 +141,7 @@ public class VRQuillPen : MonoBehaviour
 
         // --- 2. Έλεγχος για Άδεια Εμπόρου ---
         MerchantPermit permit = currentPaper.GetComponentInParent<MerchantPermit>();
-        if (permit == null)
-        {
-            permit = currentPaper.GetComponentInChildren<MerchantPermit>();
-        }
+        if (permit == null) permit = currentPaper.GetComponentInChildren<MerchantPermit>();
 
         if (permit != null)
         {
@@ -157,10 +151,21 @@ public class VRQuillPen : MonoBehaviour
             documentFound = true;
         }
 
-        // Αν δεν βρήκε κανένα από τα δύο
+        // --- 3. ΝΕΟ: Έλεγχος για Στρατιωτικό Έγγραφο (Μισθοφόρος) ---
+        MercenaryWrit writ = currentPaper.GetComponentInParent<MercenaryWrit>();
+        if (writ == null) writ = currentPaper.GetComponentInChildren<MercenaryWrit>();
+
+        if (writ != null)
+        {
+            writ.hasBeenStamped = true;
+            writ.lastAppliedStamp = penDecision;
+            Debug.Log($"<color=orange>Η Πένα βρήκε το Στρατιωτικό Έγγραφο και έστειλε απόφαση: {penDecision}</color>");
+            documentFound = true;
+        }
+
         if (!documentFound)
         {
-            Debug.LogError("<color=red>ΣΦΑΛΜΑ: Η πένα ζωγράφισε, αλλά δεν μπόρεσε να βρει ούτε Διαβατήριο ούτε Άδεια στο χαρτί!</color>");
+            Debug.LogError("<color=red>ΣΦΑΛΜΑ: Η πένα ζωγράφισε, αλλά δεν μπόρεσε να βρει συμβατό έγγραφο στο χαρτί!</color>");
         }
 
         NPCController currentNPC = FindObjectOfType<NPCController>();
