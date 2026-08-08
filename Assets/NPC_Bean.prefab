@@ -127,4 +127,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0c2af96f3d8cdc479dcdf66d963ef17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  mismatchProbability: 0.307
+  citizenForgeryProbability: 1
+  merchantForgeryProbability: 1

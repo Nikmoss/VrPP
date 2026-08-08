@@ -6,15 +6,16 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class NPCController : MonoBehaviour
 {
-    [Header("Ρυθμίσεις Δυσκολίας")]
+    [Header("Ρυθμίσεις Δυσκολίας - Meters Πλαστογραφίας")]
     [Range(0f, 1f)]
-    [Tooltip("Η πιθανότητα (0.0 έως 1.0) τα ονόματα του εμπόρου να ΔΕΝ ταιριάζουν.")]
-    public float mismatchProbability = 0.3f;
+    public float citizenForgeryProbability = 0.3f;
+
+    [Range(0f, 1f)]
+    public float merchantForgeryProbability = 0.3f;
 
     private Transform spawnPoint;
     private Transform windowPoint;
     private Transform exitPoint;
-
     private GameObject[] documentPrefabs;
     private XRSocketInteractor[] clientSockets;
     private float moveSpeed = 1.5f;
@@ -24,12 +25,8 @@ public class NPCController : MonoBehaviour
 
     public void Setup(Transform spawn, Transform window, Transform exit, GameObject[] docs, XRSocketInteractor[] sockets)
     {
-        spawnPoint = spawn;
-        windowPoint = window;
-        exitPoint = exit;
-        documentPrefabs = docs;
-        clientSockets = sockets;
-
+        spawnPoint = spawn; windowPoint = window; exitPoint = exit;
+        documentPrefabs = docs; clientSockets = sockets;
         StartCoroutine(NPCFlowRoutine());
     }
 
@@ -41,13 +38,12 @@ public class NPCController : MonoBehaviour
             transform.position = Vector3.MoveTowards(transform.position, windowPoint.position, moveSpeed * Time.deltaTime);
             yield return null;
         }
-
         yield return new WaitForSeconds(0.5f);
 
-        // 1. Γεννάμε τα χαρτιά
         spawnedDocuments.Clear();
         DynamicPassport spawnedPassport = null;
         MerchantPermit spawnedPermit = null;
+        MercenaryWrit spawnedWrit = null;
 
         for (int i = 0; i < documentPrefabs.Length; i++)
         {
@@ -55,190 +51,232 @@ public class NPCController : MonoBehaviour
             {
                 GameObject doc = Instantiate(documentPrefabs[i], clientSockets[i].transform.position, clientSockets[i].transform.rotation);
                 spawnedDocuments.Add(doc);
-
                 if (doc.GetComponent<DynamicPassport>() != null) spawnedPassport = doc.GetComponent<DynamicPassport>();
                 if (doc.GetComponent<MerchantPermit>() != null) spawnedPermit = doc.GetComponent<MerchantPermit>();
+                if (doc.GetComponent<MercenaryWrit>() != null) spawnedWrit = doc.GetComponent<MercenaryWrit>();
             }
         }
 
-        // 2. Λογική Πιθανοτήτων: Ελέγχουμε αν τα ονόματα θα ταιριάζουν ή όχι
+        // --- ΛΟΓΙΚΗ ΓΕΝΝΗΣΗΣ ΧΑΡΤΙΩΝ ΒΑΣΕΙ ΤΩΝ METERS ---
         if (spawnedPassport != null && spawnedPermit != null)
         {
-            bool shouldMismatch = Random.value < mismatchProbability;
+            bool isMerchantForged = Random.value < merchantForgeryProbability;
 
-            if (!shouldMismatch)
+            if (!isMerchantForged)
             {
-                // Επιβάλλουμε τα ονόματα να είναι ΙΔΙΑ με του διαβατηρίου (Κανονικός Έμπορος)
+                // ΣΩΣΤΟΣ ΕΜΠΟΡΟΣ
+                spawnedPassport.GenerateData(false);
+                spawnedPassport.currentPurpose = "Trade";
+
                 spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+                spawnedPermit.currentCity = spawnedPassport.originCityName;
+
+                spawnedPermit.issueDay = spawnedPassport.issueDay;
+                spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
+                spawnedPermit.issueYear = spawnedPassport.issueYear;
+                if (spawnedPermit.issueMonth > 12) { spawnedPermit.issueMonth -= 12; spawnedPermit.issueYear += 1; }
             }
             else
             {
-                // Επιβάλλουμε να είναι ΔΙΑΦΟΡΕΤΙΚΑ (Πλαστογράφος)
-                while (spawnedPermit.currentFirstName == spawnedPassport.currentFirstName &&
-                       spawnedPermit.currentLastName == spawnedPassport.currentLastName)
+                // ΠΛΑΣΤΟΓΡΑΦΟΣ ΕΜΠΟΡΟΣ: Μπορεί το λάθος να είναι το Διαβατήριο (0) ή η Σύγκριση (1-4)
+                int errorType = Random.Range(0, 5);
+
+                if (errorType == 0)
                 {
-                    spawnedPermit.GenerateData(); // Ξαναδιαλέγει τυχαία μέχρι να μην ταιριάζουν
+                    // ΝΕΟ: Το Διαβατήριο ΕΙΝΑΙ το πρόβλημα (Ληγμένο ή Λάθος Έμβλημα)!
+                    spawnedPassport.GenerateData(true);
+                    spawnedPassport.currentPurpose = "Trade"; // Το κρατάμε Trade για να είναι μόνο ΕΝΑ το λάθος
+
+                    // Το Permit ταιριάζει απόλυτα με ό,τι λέει το Passport
+                    spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+                    spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.issueDay = spawnedPassport.issueDay;
+                    spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
+                    spawnedPermit.issueYear = spawnedPassport.issueYear;
+                    if (spawnedPermit.issueMonth > 12) { spawnedPermit.issueMonth -= 12; spawnedPermit.issueYear += 1; }
+                }
+                else if (errorType == 1)
+                {
+                    // Λάθος Όνομα (Απλή μαθηματική μετατόπιση λίστας, κανένα κόλλημα)
+                    spawnedPassport.GenerateData(false);
+                    spawnedPassport.currentPurpose = "Trade";
+
+                    int wrongFirstIndex = (System.Array.IndexOf(spawnedPermit.firstNames, spawnedPassport.currentFirstName) + 1) % spawnedPermit.firstNames.Length;
+                    int wrongLastIndex = (System.Array.IndexOf(spawnedPermit.lastNames, spawnedPassport.currentLastName) + 1) % spawnedPermit.lastNames.Length;
+
+                    spawnedPermit.currentFirstName = spawnedPermit.firstNames[wrongFirstIndex];
+                    spawnedPermit.currentLastName = spawnedPermit.lastNames[wrongLastIndex];
+
+                    spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.issueDay = spawnedPassport.issueDay;
+                    spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
+                    spawnedPermit.issueYear = spawnedPassport.issueYear;
+                    if (spawnedPermit.issueMonth > 12) { spawnedPermit.issueMonth -= 12; spawnedPermit.issueYear += 1; }
+                }
+                else if (errorType == 2)
+                {
+                    // Λάθος Πόλη 
+                    spawnedPassport.GenerateData(false);
+                    spawnedPassport.currentPurpose = "Trade";
+                    spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+
+                    int wrongCityIndex = (System.Array.IndexOf(spawnedPermit.cities, spawnedPassport.originCityName) + 1) % spawnedPermit.cities.Length;
+                    spawnedPermit.currentCity = spawnedPermit.cities[wrongCityIndex];
+
+                    spawnedPermit.issueDay = spawnedPassport.issueDay;
+                    spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
+                    spawnedPermit.issueYear = spawnedPassport.issueYear;
+                    if (spawnedPermit.issueMonth > 12) { spawnedPermit.issueMonth -= 12; spawnedPermit.issueYear += 1; }
+                }
+                else if (errorType == 3)
+                {
+                    // Λάθος Ημερομηνία 
+                    spawnedPassport.GenerateData(false);
+                    spawnedPassport.currentPurpose = "Trade";
+                    spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+                    spawnedPermit.currentCity = spawnedPassport.originCityName;
+
+                    spawnedPermit.issueDay = spawnedPassport.issueDay;
+                    spawnedPermit.issueYear = spawnedPassport.issueYear;
+                    spawnedPermit.issueMonth = spawnedPassport.issueMonth - Random.Range(1, 4);
+
+                    if (spawnedPermit.issueMonth <= 0)
+                    {
+                        spawnedPermit.issueMonth += 12;
+                        spawnedPermit.issueYear -= 1;
+                    }
+                }
+                else
+                {
+                    // Λάθος Σκοπός Ταξιδιού
+                    spawnedPassport.GenerateData(false);
+                    string[] badPurposes = { "Visit", "Work", "Transit" };
+                    spawnedPassport.currentPurpose = badPurposes[Random.Range(0, badPurposes.Length)];
+
+                    spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+                    spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.issueDay = spawnedPassport.issueDay;
+                    spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
+                    spawnedPermit.issueYear = spawnedPassport.issueYear;
+                    if (spawnedPermit.issueMonth > 12) { spawnedPermit.issueMonth -= 12; spawnedPermit.issueYear += 1; }
                 }
             }
+            spawnedPassport.UpdateUI();
+            spawnedPermit.UpdateUI();
+        }
+        else if (spawnedWrit != null)
+        {
+            // ΣΤΡΑΤΙΩΤΗΣ (Δεν αλλάζει κάτι)
+        }
+        else if (spawnedPassport != null)
+        {
+            // ΑΠΛΟΣ ΠΟΛΙΤΗΣ
+            bool isCitizenForged = Random.value < citizenForgeryProbability;
+            spawnedPassport.GenerateData(isCitizenForged);
         }
 
         bool readyToLeave = false;
         while (!readyToLeave)
         {
             if (isArrested) yield break;
-
             int stampedCount = 0;
             int totalRequired = documentPrefabs.Length;
-
             for (int i = 0; i < totalRequired; i++)
             {
                 if (clientSockets[i] != null && clientSockets[i].hasSelection)
                 {
                     GameObject itemInSocket = clientSockets[i].GetOldestInteractableSelected().transform.gameObject;
-
-                    if (IsDocumentStamped(itemInSocket))
-                    {
-                        stampedCount++;
-                    }
+                    if (IsDocumentStamped(itemInSocket)) stampedCount++;
                 }
             }
-
-            if (stampedCount >= totalRequired && totalRequired > 0)
-            {
-                readyToLeave = true;
-            }
-
+            if (stampedCount >= totalRequired && totalRequired > 0) readyToLeave = true;
             yield return null;
         }
 
         yield return new WaitForSeconds(1.0f);
-
-        // --- ΑΞΙΟΛΟΓΗΣΗ ΚΑΙ ΠΟΝΤΟΙ ---
         EvaluatePlayerDecision();
 
-        foreach (var doc in spawnedDocuments)
-        {
-            if (doc != null) Destroy(doc);
-        }
-
+        foreach (var doc in spawnedDocuments) if (doc != null) Destroy(doc);
         while (Vector3.Distance(transform.position, exitPoint.position) > 0.05f)
         {
             transform.position = Vector3.MoveTowards(transform.position, exitPoint.position, moveSpeed * Time.deltaTime);
             yield return null;
         }
-
         Destroy(gameObject);
     }
 
     private void EvaluatePlayerDecision()
     {
-        DynamicPassport passport = null;
-        MerchantPermit permit = null;
-        MercenaryWrit writ = null; // ΝΕΟ: Αναφορά στο χαρτί του Στρατιώτη
-
+        DynamicPassport passport = null; MerchantPermit permit = null; MercenaryWrit writ = null;
         ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
-
-        if (scoreManager == null)
-        {
-            Debug.LogError("<color=red>ΣΦΑΛΜΑ:</color> Δεν μπόρεσα να βρω το ScoreManager!");
-        }
 
         foreach (var socket in clientSockets)
         {
             if (socket != null && socket.hasSelection)
             {
                 GameObject item = socket.GetOldestInteractableSelected().transform.gameObject;
-
-                if (item.GetComponent<DynamicPassport>() != null)
-                    passport = item.GetComponent<DynamicPassport>();
-
-                if (item.GetComponent<MerchantPermit>() != null)
-                    permit = item.GetComponent<MerchantPermit>();
-
-                if (item.GetComponent<MercenaryWrit>() != null)
-                    writ = item.GetComponent<MercenaryWrit>(); // ΝΕΟ: Εντοπισμός
+                if (item.GetComponent<DynamicPassport>() != null) passport = item.GetComponent<DynamicPassport>();
+                if (item.GetComponent<MerchantPermit>() != null) permit = item.GetComponent<MerchantPermit>();
+                if (item.GetComponent<MercenaryWrit>() != null) writ = item.GetComponent<MercenaryWrit>();
             }
         }
 
-        // --- ΣΕΝΑΡΙΟ 1: Έμπορος (2 Χαρτιά) ---
         if (passport != null && permit != null)
         {
-            bool namesMatch = (passport.currentFirstName == permit.currentFirstName) &&
-                              (passport.currentLastName == permit.currentLastName);
-            bool isNotExpired = !passport.isExpired;
+            bool namesMatch = (passport.currentFirstName == permit.currentFirstName) && (passport.currentLastName == permit.currentLastName);
+            bool citiesMatch = (passport.originCityName == permit.currentCity);
+            bool purposeMatch = (passport.currentPurpose == "Trade");
 
-            bool shouldBeApproved = namesMatch && isNotExpired;
-            bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved &&
-                                   permit.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
+            bool permitNotTooEarly = CompareDates(passport.issueDay, passport.issueMonth, passport.issueYear, permit.issueDay, permit.issueMonth, permit.issueYear) <= 0;
+            bool permitNotTooLate = CompareDates(permit.issueDay, permit.issueMonth, permit.issueYear, passport.expDay, passport.expMonth, passport.expYear) <= 0;
+            bool datesMatch = permitNotTooEarly && permitNotTooLate;
 
-            if (shouldBeApproved && playerApproved)
+            bool passportValid = !passport.isExpired && !passport.hasCityMismatch;
+
+            bool shouldBeApproved = namesMatch && citiesMatch && purposeMatch && datesMatch && passportValid;
+            bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved && permit.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
+
+            if (shouldBeApproved == playerApproved)
             {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ονόματα ίδια ΚΑΙ έγκυρο. Το ενέκρινες.");
-                if (scoreManager != null) scoreManager.AddScore();
-            }
-            else if (!shouldBeApproved && !playerApproved)
-            {
-                if (!namesMatch)
-                    Debug.Log("<color=green>ΣΩΣΤΟ!</color> Βρήκες τα διαφορετικά ονόματα και το απέρριψες!");
-                else
-                    Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ίδια ονόματα, ΑΛΛΑ ήταν ληγμένο και το απέρριψες!");
-
+                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ορθή απόφαση για τον Έμπορο.");
                 if (scoreManager != null) scoreManager.AddScore();
             }
             else
             {
-                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Η απόφασή σου ήταν λανθασμένη για τον Έμπορο.");
+                Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Λάθος στον Έμπορο! Αιτία -> Ονόματα: {namesMatch}, Πόλεις: {citiesMatch}, Σκοπός (Trade): {purposeMatch}, Ημερομηνίες: {datesMatch}, Διαβατήριο Νόμιμο: {passportValid}");
                 if (scoreManager != null) scoreManager.SubtractScore();
             }
         }
-        // --- ΣΕΝΑΡΙΟ 2: Στρατιώτης (1 Χαρτί - Mercenary Writ) ---
         else if (writ != null)
         {
-            bool shouldBeApproved = !writ.isForged; // Αν δεν είναι πλαστό, πρέπει να εγκριθεί
+            bool shouldBeApproved = !writ.isForged;
             bool playerApproved = (writ.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
-            if (shouldBeApproved == playerApproved)
-            {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Σωστή απόφαση για τον Στρατιώτη.");
-                if (scoreManager != null) scoreManager.AddScore();
-            }
-            else
-            {
-                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Λάθος απόφαση για τον Στρατιώτη.");
-                if (scoreManager != null) scoreManager.SubtractScore();
-            }
+            if (shouldBeApproved == playerApproved) { if (scoreManager != null) scoreManager.AddScore(); }
+            else { if (scoreManager != null) scoreManager.SubtractScore(); }
         }
-        // --- ΣΕΝΑΡΙΟ 3: Απλός Πολίτης (1 Χαρτί - Διαβατήριο) ---
         else if (passport != null)
         {
-            bool shouldBeApproved = !passport.isExpired;
+            bool shouldBeApproved = !passport.isExpired && !passport.hasCityMismatch;
             bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
-            if (shouldBeApproved == playerApproved)
-            {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Σωστή απόφαση για το διαβατήριο.");
-                if (scoreManager != null) scoreManager.AddScore();
-            }
-            else
-            {
-                Debug.Log("<color=red>ΛΑΘΟΣ!</color> Λάθος απόφαση για το διαβατήριο.");
-                if (scoreManager != null) scoreManager.SubtractScore();
-            }
+            if (shouldBeApproved == playerApproved) { if (scoreManager != null) scoreManager.AddScore(); }
+            else { if (scoreManager != null) scoreManager.SubtractScore(); }
         }
+    }
+
+    private int CompareDates(int d1, int m1, int y1, int d2, int m2, int y2)
+    {
+        if (y1 != y2) return y1.CompareTo(y2);
+        if (m1 != m2) return m1.CompareTo(m2);
+        return d1.CompareTo(d2);
     }
 
     private bool IsDocumentStamped(GameObject item)
     {
-        DynamicPassport passport = item.GetComponent<DynamicPassport>();
-        if (passport != null) return passport.hasBeenStamped;
-
-        MerchantPermit permit = item.GetComponent<MerchantPermit>();
-        if (permit != null) return permit.hasBeenStamped;
-
-        // ΝΕΟ: Έλεγχος αν το στρατιωτικό χαρτί έχει σφραγιστεί/υπογραφεί
-        MercenaryWrit writ = item.GetComponent<MercenaryWrit>();
-        if (writ != null) return writ.hasBeenStamped;
-
+        if (item.GetComponent<DynamicPassport>() != null) return item.GetComponent<DynamicPassport>().hasBeenStamped;
+        if (item.GetComponent<MerchantPermit>() != null) return item.GetComponent<MerchantPermit>().hasBeenStamped;
+        if (item.GetComponent<MercenaryWrit>() != null) return item.GetComponent<MercenaryWrit>().hasBeenStamped;
         return false;
     }
 

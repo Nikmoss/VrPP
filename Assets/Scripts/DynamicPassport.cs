@@ -1,69 +1,148 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
-/// <summary>
-/// Δημιουργεί τυχαία στοιχεία διαβατηρίου (ονόματα, ημερομηνίες), 
-/// ενημερώνει το Canvas και "θυμάται" την τελευταία σφραγίδα που δέχτηκε.
-/// </summary>
 public class DynamicPassport : MonoBehaviour
 {
-    [Header("UI References")]
-    [Tooltip("Το TextMeshPro που δείχνει τα στοιχεία του διαβατηρίου.")]
-    public TMP_Text passportText;
+    [Header("UI References (Texts)")]
+    public TMP_Text titleText;
+    public TMP_Text paragraphText;
+    public TMP_Text statsText;
+    public TMP_Text signatureText;
 
-    [Header("Ρυθμίσεις Παιχνιδιού")]
-    public int currentGameYear = 1982;
-    [Range(0f, 1f)] public float expirationProbability = 0.3f;
+    [Header("UI References (Images)")]
+    public Image cityEmblemImage;
+    public Image lordSignatureImage;
+
+    [Header("Ρυθμίσεις")]
+    public int currentGameYear = 2026;
 
     [Header("Κατάσταση (Διαβάζεται από άλλα scripts)")]
-    public bool isExpired;
     public string currentFirstName;
     public string currentLastName;
+    public string originCityName;
+    public string currentPurpose;
+    public string dest;
+    public bool isForged;
+    public bool isExpired;
+    public bool hasCityMismatch;
+
+    [Header("Ακριβείς Ημερομηνίες")]
+    public int issueDay;
+    public int issueMonth;
+    public int issueYear;
+    public int expDay;
+    public int expMonth;
+    public int expYear;
 
     [Header("Κατάσταση Σφραγίδας")]
     public bool hasBeenStamped = false;
     public VelocityStampTool.StampDecision lastAppliedStamp;
 
-    private readonly string[] firstNames = { "GREGOR", "IVAN", "ANNA", "MARIA", "DMITRI", "ELENA", "BORIS", "NATALIA", "YURI", "KATYA" };
-    private readonly string[] lastNames = { "IVANOV", "SMIRNOV", "POPOV", "SOKOLOV", "VOLKOV", "KOZLOV", "MOROZOV", "NOVIKOV", "PETROV" };
+    private readonly string[] firstNames = { "NIKOLAS", "THOMAS", "WILLIAM", "JOHN", "EDWARD", "ROBERT", "MARY", "ELIZABETH", "ANNE" };
+    private readonly string[] lastNames = { "MOSS", "SMITH", "BAKER", "CLARK", "WRIGHT", "TURNER", "COOPER" };
+    private readonly string[] destinations = { "SALOUGA", "ATHENS", "THESSALONIKI", "VOLOS", "LARISSA" };
+    public readonly string[] purposes = { "Visit", "Trade", "Work", "Transit" };
 
-    // ΑΛΛΑΓΗ: Το Awake εκτελείται ακαριαία όταν γίνεται το Instantiate
+    private readonly string[] cities = { "VOLOS", "ATHENS", "SPARTA", "THEBES", "CORINTH" };
+    private readonly Color[] cityColors = { Color.blue, new Color(0f, 0.5f, 0f), Color.red, Color.magenta, Color.gray };
+    private readonly Color[] signatureColors = { Color.black, new Color(0.1f, 0.1f, 0.4f), new Color(0.4f, 0.1f, 0.1f), new Color(0.2f, 0.2f, 0.2f) };
+
     private void Awake()
     {
-        GenerateData();
+        // Αρχική δημιουργία (έγκυρο από προεπιλογή μέχρι να το αλλάξει ο NPCController)
+        GenerateData(false);
     }
 
-    private void GenerateData()
+    public void GenerateData(bool makeItForged)
     {
         currentFirstName = firstNames[Random.Range(0, firstNames.Length)];
         currentLastName = lastNames[Random.Range(0, lastNames.Length)];
+        dest = destinations[Random.Range(0, destinations.Length)];
+        currentPurpose = purposes[Random.Range(0, purposes.Length)];
 
-        isExpired = Random.value < expirationProbability;
+        isForged = makeItForged;
+        isExpired = false;
+        hasCityMismatch = false;
 
-        int expirationYear;
-        int expirationMonth = Random.Range(1, 13);
-        int expirationDay = Random.Range(1, 29);
-
-        if (isExpired)
+        if (isForged)
         {
-            expirationYear = Random.Range(currentGameYear - 5, currentGameYear);
-        }
-        else
-        {
-            expirationYear = Random.Range(currentGameYear, currentGameYear + 10);
+            if (Random.value < 0.5f) isExpired = true;
+            else hasCityMismatch = true;
         }
 
-        string formattedDate = $"{expirationDay:00}-{expirationMonth:00}-{expirationYear}";
+        expYear = isExpired ? Random.Range(currentGameYear - 3, currentGameYear) : Random.Range(currentGameYear + 1, currentGameYear + 5);
+        expMonth = Random.Range(1, 13);
+        expDay = Random.Range(1, 29);
 
-        if (passportText != null)
+        issueYear = expYear - Random.Range(3, 6);
+        issueMonth = Random.Range(1, 13);
+        issueDay = Random.Range(1, 29);
+
+        int cityIndex = Random.Range(0, cities.Length);
+        originCityName = cities[cityIndex];
+
+        UpdateUI();
+    }
+
+    public void UpdateUI()
+    {
+        string expiryDateStr = $"{GetOrdinal(expDay)} day of {GetMonthName(expMonth)}, {expYear}";
+        string issueDateStr = $"{GetOrdinal(issueDay)} day of {GetMonthName(issueMonth)}, {issueYear}";
+
+        Color assignedCityColor = Color.white;
+        int cityIndex = System.Array.IndexOf(cities, originCityName);
+
+        if (cityIndex >= 0)
         {
-            passportText.text = $"ΟΝΟΜΑ: {currentFirstName}\nΕΠΙΘΕΤΟ: {currentLastName}\nΗΜ. ΛΗΞΗΣ: {formattedDate}";
+            assignedCityColor = cityColors[cityIndex];
+
+            if (hasCityMismatch)
+            {
+                int wrongColorIndex = Random.Range(0, cityColors.Length);
+                while (wrongColorIndex == cityIndex) wrongColorIndex = Random.Range(0, cityColors.Length);
+                assignedCityColor = cityColors[wrongColorIndex];
+            }
         }
+
+        if (cityEmblemImage != null) cityEmblemImage.color = assignedCityColor;
+
+        if (titleText != null) titleText.text = "Letter of Safe Conduct";
+        if (paragraphText != null) paragraphText.text = "Γνωστοποιείται ότι ο κομιστής\nτου παρόντος, που ονομάζεται\nπαρακάτω, είναι ειρηνικός\nταξιδιώτης. Επιτρέπεται η\nελεύθερη διέλευσή του χωρίς\nκώλυμα.";
+
+        if (statsText != null)
+        {
+            statsText.text =
+                $"Name of the Bearer: {currentFirstName} {currentLastName}\n" +
+                $"Place of Origin: {originCityName}\n" +
+                $"Destination: {dest}\n" +
+                $"Purpose of Travel: {currentPurpose}\n" +
+                $"Accompanied by: None\n" +
+                $"Date Issued: {issueDateStr}\n" +
+                $"Valid Until: {expiryDateStr}";
+        }
+
+        if (signatureText != null) signatureText.text = $"By order of the Sheriff of {originCityName},";
+        if (lordSignatureImage != null) lordSignatureImage.color = signatureColors[Random.Range(0, signatureColors.Length)];
     }
 
     public void SetStampDecision(VelocityStampTool.StampDecision decision)
     {
         hasBeenStamped = true;
         lastAppliedStamp = decision;
+    }
+
+    private string GetOrdinal(int num)
+    {
+        if (num <= 0) return num.ToString();
+        switch (num % 100) { case 11: case 12: case 13: return num + "th"; }
+        switch (num % 10) { case 1: return num + "st"; case 2: return num + "nd"; case 3: return num + "rd"; default: return num + "th"; }
+    }
+
+    private string GetMonthName(int month)
+    {
+        string[] months = { "", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+        if (month >= 1 && month <= 12) return months[month];
+        return "Unknown";
     }
 }

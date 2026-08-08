@@ -818,8 +818,8 @@ MonoBehaviour:
   primarySocket: {fileID: 671527021}
   secondarySocket: {fileID: 1721701526}
   spawnDelay: 1
-  merchantProbability: 0.5
-  mercenaryProbability: 0.5
+  merchantProbability: 0
+  mercenaryProbability: 0
 --- !u!4 &322725816
 Transform:
   m_ObjectHideFlags: 0
