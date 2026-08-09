@@ -222,17 +222,12 @@ MonoBehaviour:
   currentFirstName: 
   currentLastName: 
   currentCity: 
+  hasCityMismatch: 0
   issueDay: 0
   issueMonth: 0
   issueYear: 2026
   hasBeenStamped: 0
   lastAppliedStamp: 0
-  cities:
-  - VOLOS
-  - ATHENS
-  - SPARTA
-  - THEBES
-  - CORINTH
 --- !u!1 &831206329667958634
 GameObject:
   m_ObjectHideFlags: 0
@@ -623,7 +618,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "Be it Known that the bearer\n\n\na registered merchant \nof the City of
-    Volos, is authorised ti travel and trade within the KIngdom's lands"
+    Volos, is authorised to travel and trade within the KIngdom's lands"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -898,7 +893,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: f37f9e0c87a855a43bd6fa39c1619d23, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1127,6 +1122,7 @@ MonoBehaviour:
   m_text: 'By the Authority of the Guild,
 
 
+
     Warden of the Guild
 
 
@@ -1197,7 +1193,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 40.04135, y: 175.12376, z: 2.048191, w: 20.860634}
+  m_margin: {x: 40.04135, y: 189.5958, z: 2.048191, w: 36.50733}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

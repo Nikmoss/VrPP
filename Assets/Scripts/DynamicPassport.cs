@@ -14,8 +14,13 @@ public class DynamicPassport : MonoBehaviour
     public Image cityEmblemImage;
     public Image lordSignatureImage;
 
-    [Header("Ρυθμίσεις")]
+    [Header("Ρυθμίσεις Δυσκολίας - Meters")]
     public int currentGameYear = 2026;
+
+    [Header("Κατανομή Λαθών (Αν είναι πλαστό)")]
+    [Range(0f, 1f)]
+    [Tooltip("Πιθανότητα το λάθος να είναι Ληγμένη Ημερομηνία (π.χ. 0.75). Το υπόλοιπο θα είναι Λάθος Έμβλημα.")]
+    public float expiredErrorChance = 0.75f;
 
     [Header("Κατάσταση (Διαβάζεται από άλλα scripts)")]
     public string currentFirstName;
@@ -39,18 +44,17 @@ public class DynamicPassport : MonoBehaviour
     public bool hasBeenStamped = false;
     public VelocityStampTool.StampDecision lastAppliedStamp;
 
-    private readonly string[] firstNames = { "NIKOLAS", "THOMAS", "WILLIAM", "JOHN", "EDWARD", "ROBERT", "MARY", "ELIZABETH", "ANNE" };
-    private readonly string[] lastNames = { "MOSS", "SMITH", "BAKER", "CLARK", "WRIGHT", "TURNER", "COOPER" };
-    private readonly string[] destinations = { "SALOUGA", "ATHENS", "THESSALONIKI", "VOLOS", "LARISSA" };
+    public readonly string[] firstNames = { "NIKOLAS", "THOMAS", "WILLIAM", "JOHN", "EDWARD", "ROBERT", "MARY", "ELIZABETH", "ANNE" };
+    public readonly string[] lastNames = { "MOSS", "SMITH", "BAKER", "CLARK", "WRIGHT", "TURNER", "COOPER" };
+    public readonly string[] destinations = { "SALOUGA", "ATHENS", "THESSALONIKI", "VOLOS", "LARISSA" };
     public readonly string[] purposes = { "Visit", "Trade", "Work", "Transit" };
 
-    private readonly string[] cities = { "VOLOS", "ATHENS", "SPARTA", "THEBES", "CORINTH" };
+    public readonly string[] cities = { "VOLOS", "ATHENS", "SPARTA", "THEBES", "CORINTH" };
     private readonly Color[] cityColors = { Color.blue, new Color(0f, 0.5f, 0f), Color.red, Color.magenta, Color.gray };
     private readonly Color[] signatureColors = { Color.black, new Color(0.1f, 0.1f, 0.4f), new Color(0.4f, 0.1f, 0.1f), new Color(0.2f, 0.2f, 0.2f) };
 
     private void Awake()
     {
-        // Αρχική δημιουργία (έγκυρο από προεπιλογή μέχρι να το αλλάξει ο NPCController)
         GenerateData(false);
     }
 
@@ -67,7 +71,8 @@ public class DynamicPassport : MonoBehaviour
 
         if (isForged)
         {
-            if (Random.value < 0.5f) isExpired = true;
+            // ΝΕΟ: Επιλογή του λάθους βάσει του ποσοστού που έβαλες
+            if (Random.value < expiredErrorChance) isExpired = true;
             else hasCityMismatch = true;
         }
 

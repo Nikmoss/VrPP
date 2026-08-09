@@ -217,7 +217,7 @@ MonoBehaviour:
   cityEmblemImage: {fileID: 2220741799374180799}
   lordSignatureImage: {fileID: 5607911450601593748}
   currentGameYear: 2026
-  forgeryProbability: 0.5
+  expiredErrorChance: 1
   currentFirstName: 
   currentLastName: 
   originCityName: 
