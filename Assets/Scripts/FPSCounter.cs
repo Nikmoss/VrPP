@@ -3,40 +3,63 @@ using TMPro;
 
 /// <summary>
 /// Υπολογίζει και εμφανίζει τα FPS στην οθόνη/VR. 
-/// Ξεκλειδώνει το framerate και αλλάζει χρώμα ανάλογα με την απόδοση.
+/// Ανανεώνει την ένδειξη με καθυστέρηση για πιο εύκολη ανάγνωση στο VR.
 /// </summary>
 public class FPSCounter : MonoBehaviour
 {
+    [Header("Αναφορές")]
     [Tooltip("Το Text (TMP) που θα δείχνει τα FPS")]
     public TMP_Text fpsText;
 
-    private float deltaTime = 0.0f;
+    [Header("Ρυθμίσεις Ανανέωσης")]
+    [Tooltip("Κάθε πόσα δευτερόλεπτα θα ανανεώνεται το νούμερο στην οθόνη.")]
+    public float updateInterval = 0.5f;
+
+    private float accumulator = 0f;
+    private int frames = 0;
+    private float timeLeft;
+
+    private void Start()
+    {
+        // Εξαναγκασμός του Unity να στοχεύσει τα 120 FPS
+        Application.targetFrameRate = 120;
+        timeLeft = updateInterval;
+    }
 
     private void Update()
     {
-        // Υπολογισμός του χρόνου μεταξύ των frames
-        deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
+        timeLeft -= Time.unscaledDeltaTime;
+        accumulator += Time.unscaledDeltaTime;
+        frames++;
 
-        // Μετατροπή σε Frames Per Second
-        float fps = 1.0f / deltaTime;
-
-        if (fpsText != null)
+        // Ανανέωση του κειμένου μόνο όταν περάσει ο χρόνος (π.χ. κάθε 0.5 δευτερόλεπτα)
+        if (timeLeft <= 0.0f)
         {
-            fpsText.text = $"FPS: {Mathf.Ceil(fps)}";
+            float fps = frames / accumulator;
 
-            // Οπτική ένδειξη της απόδοσης του VR
-            if (fps >= 72)
+            if (fpsText != null)
             {
-                fpsText.color = Color.green; // Τέλεια απόδοση
+                fpsText.text = $"FPS: {Mathf.RoundToInt(fps)}";
+
+                // Οπτική ένδειξη της απόδοσης ειδικά για τα 120Hz του PSVR2
+                if (fps >= 110f)
+                {
+                    fpsText.color = Color.green; // Τέλεια απόδοση
+                }
+                else if (fps >= 72f)
+                {
+                    fpsText.color = Color.yellow; // Προσοχή, πέφτουν τα frames 
+                }
+                else
+                {
+                    fpsText.color = Color.red; // Κίνδυνος για motion sickness!
+                }
             }
-            else if (fps >= 45)
-            {
-                fpsText.color = Color.yellow; // Προσοχή, πέφτουν τα frames 
-            }
-            else
-            {
-                fpsText.color = Color.red; // Κίνδυνος για motion sickness!
-            }
+
+            // Επαναφορά μετρητών για τον επόμενο κύκλο
+            timeLeft = updateInterval;
+            accumulator = 0.0f;
+            frames = 0;
         }
     }
 }
