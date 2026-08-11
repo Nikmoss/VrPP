@@ -20,6 +20,7 @@ public class MerchantPermit : MonoBehaviour
     public string currentFirstName;
     public string currentLastName;
     public string currentCity;
+    public bool hasCityMismatch = false; // ΝΕΟ: Ελέγχει αν το βουλοκέρι θα έχει λάθος χρώμα
 
     [Header("Ακριβείς Ημερομηνίες")]
     public int issueDay;
@@ -48,6 +49,7 @@ public class MerchantPermit : MonoBehaviour
         currentFirstName = firstNames[Random.Range(0, firstNames.Length)];
         currentLastName = lastNames[Random.Range(0, lastNames.Length)];
         currentCity = cities[Random.Range(0, cities.Length)];
+        hasCityMismatch = false;
 
         issueDay = Random.Range(1, 29);
         issueMonth = Random.Range(1, 13);
@@ -60,19 +62,6 @@ public class MerchantPermit : MonoBehaviour
     {
         currentFirstName = fName;
         currentLastName = lName;
-        UpdateUI();
-    }
-
-    // ΝΕΟ: Εγγυάται ότι θα διαλέξει ΟΠΩΣΔΗΠΟΤΕ λάθος ονόματα
-    public void ForceDifferentNames(string correctFirst, string correctLast)
-    {
-        do
-        {
-            currentFirstName = firstNames[Random.Range(0, firstNames.Length)];
-            currentLastName = lastNames[Random.Range(0, lastNames.Length)];
-        }
-        while (currentFirstName == correctFirst && currentLastName == correctLast);
-
         UpdateUI();
     }
 
@@ -104,10 +93,24 @@ public class MerchantPermit : MonoBehaviour
 
         if (signatureText != null) signatureText.text = "By the Authority of the Guild,\n\nWarden of the Guild";
 
+        // ΝΕΟ: Λογική για λάθος χρώμα στο βουλοκέρι
         if (cityEmblemImage != null)
         {
+            Color assignedCityColor = Color.white;
             int cityIndex = System.Array.IndexOf(cities, currentCity);
-            if (cityIndex >= 0 && cityIndex < cityColors.Length) cityEmblemImage.color = cityColors[cityIndex];
+
+            if (cityIndex >= 0)
+            {
+                assignedCityColor = cityColors[cityIndex];
+
+                if (hasCityMismatch)
+                {
+                    int wrongColorIndex = Random.Range(0, cityColors.Length);
+                    while (wrongColorIndex == cityIndex) wrongColorIndex = Random.Range(0, cityColors.Length);
+                    assignedCityColor = cityColors[wrongColorIndex];
+                }
+            }
+            cityEmblemImage.color = assignedCityColor;
         }
 
         if (signatureImage != null) signatureImage.color = signatureColors[Random.Range(0, signatureColors.Length)];

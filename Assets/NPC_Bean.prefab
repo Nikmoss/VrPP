@@ -127,5 +127,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0c2af96f3d8cdc479dcdf66d963ef17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  citizenForgeryProbability: 1
-  merchantForgeryProbability: 1
+  citizenForgeryProbability: 0
+  merchantForgeryProbability: 0
+  weightPassportError: 40
+  weightNameError: 20
+  weightCityError: 20
+  weightDateError: 20
+  weightPurposeError: 20
+  weightPermitEmblemError: 20
