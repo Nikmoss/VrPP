@@ -9,7 +9,7 @@ public class NPCSpawner : MonoBehaviour
     public GameObject npcPrefab;
     public GameObject passportPrefab;
     public GameObject merchantPermitPrefab;
-    public GameObject mercenaryWritPrefab; // ΝΕΟ: Το Prefab του Στρατιώτη
+    public GameObject mercenaryWritPrefab;
 
     [Header("Waypoints")]
     public Transform spawnPoint;
@@ -22,13 +22,6 @@ public class NPCSpawner : MonoBehaviour
 
     [Header("Timing & Settings")]
     public float spawnDelay = 1.0f;
-
-    [Tooltip("Πιθανότητα να εμφανιστεί Έμπορος (π.χ. 0.3 = 30%)")]
-    [Range(0f, 1f)] public float merchantProbability = 0.3f;
-
-    [Tooltip("Πιθανότητα να εμφανιστεί Στρατιώτης (π.χ. 0.3 = 30%)")]
-    [Range(0f, 1f)] public float mercenaryProbability = 0.3f;
-    // Αν δεν είναι ούτε το ένα ούτε το άλλο, έρχεται Απλός Πολίτης!
 
     private GameObject currentNPC;
     private bool isSpawning = false;
@@ -56,10 +49,24 @@ public class NPCSpawner : MonoBehaviour
         yield return new WaitForSeconds(spawnDelay);
 
         currentNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation);
-
         NPCController controller = currentNPC.GetComponent<NPCController>();
+
         if (controller != null)
         {
+            // --- ΑΝΤΛΗΣΗ ΠΙΘΑΝΟΤΗΤΩΝ ΑΠΟ ΤΟ DAY MANAGER ---
+            float merSpawnProb = 0f;
+            float mercSpawnProb = 0f;
+
+            if (DayManager.Instance != null)
+            {
+                DaySettings today = DayManager.Instance.GetCurrentDaySettings();
+                if (today != null)
+                {
+                    merSpawnProb = today.merchantSpawnProbability;
+                    mercSpawnProb = today.mercenarySpawnProbability;
+                }
+            }
+
             // Ρίχνουμε το ζάρι από το 0 έως το 1
             float roll = Random.value;
 
@@ -67,14 +74,14 @@ public class NPCSpawner : MonoBehaviour
             XRSocketInteractor[] socketsToUse;
 
             // ΕΛΕΓΧΟΣ 1: Είναι Έμπορος;
-            if (roll < merchantProbability && merchantPermitPrefab != null && secondarySocket != null)
+            if (roll < merSpawnProb && merchantPermitPrefab != null && secondarySocket != null)
             {
                 docsToSpawn = new GameObject[] { passportPrefab, merchantPermitPrefab };
                 socketsToUse = new XRSocketInteractor[] { primarySocket, secondarySocket };
                 Debug.Log("<color=yellow>Έφτασε πελάτης: ΕΜΠΟΡΟΣ</color>");
             }
             // ΕΛΕΓΧΟΣ 2: Είναι Στρατιώτης;
-            else if (roll < (merchantProbability + mercenaryProbability) && mercenaryWritPrefab != null)
+            else if (roll < (merSpawnProb + mercSpawnProb) && mercenaryWritPrefab != null)
             {
                 docsToSpawn = new GameObject[] { mercenaryWritPrefab };
                 socketsToUse = new XRSocketInteractor[] { primarySocket };
@@ -92,5 +99,31 @@ public class NPCSpawner : MonoBehaviour
         }
 
         isSpawning = false;
+    }
+
+    // --- ΝΕΑ ΜΕΘΟΔΟΣ: Καθαρίζει τα πάντα για τη νέα μέρα ---
+    public void ResetSpawner()
+    {
+        StopAllCoroutines();
+        isSpawning = false;
+
+        // Διαγραφή του NPC αν υπάρχει
+        if (currentNPC != null)
+        {
+            Destroy(currentNPC);
+            currentNPC = null;
+        }
+
+        // Σάρωση και διαγραφή όλων των εγγράφων που έχουν μείνει στη σκηνή
+        DynamicPassport[] passports = FindObjectsOfType<DynamicPassport>();
+        foreach (var p in passports) Destroy(p.gameObject);
+
+        MerchantPermit[] permits = FindObjectsOfType<MerchantPermit>();
+        foreach (var p in permits) Destroy(p.gameObject);
+
+        MercenaryWrit[] writs = FindObjectsOfType<MercenaryWrit>();
+        foreach (var w in writs) Destroy(w.gameObject);
+
+        Debug.Log("Το γραφείο και οι NPCs καθαρίστηκαν επιτυχώς για τη νέα μέρα.");
     }
 }

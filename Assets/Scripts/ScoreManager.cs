@@ -38,6 +38,14 @@ public class ScoreManager : MonoBehaviour
         UpdateScoreUI();
     }
 
+    // --- ΝΕΑ ΜΕΘΟΔΟΣ: Καλείται από το script του κεριού (CandleDayAdvancer) ---
+    public void ResetDailyStats()
+    {
+        currentScore = 0;
+        UpdateScoreUI();
+        Debug.Log("Νέα μέρα ξεκίνησε! Το σκορ μηδενίστηκε.");
+    }
+
     private void UpdateScoreUI()
     {
         if (scoreText != null)

@@ -14,14 +14,6 @@ public class DynamicPassport : MonoBehaviour
     public Image cityEmblemImage;
     public Image lordSignatureImage;
 
-    [Header("Ρυθμίσεις Δυσκολίας - Meters")]
-    public int currentGameYear = 2026;
-
-    [Header("Κατανομή Λαθών (Αν είναι πλαστό)")]
-    [Range(0f, 1f)]
-    [Tooltip("Πιθανότητα το λάθος να είναι Ληγμένη Ημερομηνία (π.χ. 0.75). Το υπόλοιπο θα είναι Λάθος Έμβλημα.")]
-    public float expiredErrorChance = 0.75f;
-
     [Header("Κατάσταση (Διαβάζεται από άλλα scripts)")]
     public string currentFirstName;
     public string currentLastName;
@@ -69,14 +61,27 @@ public class DynamicPassport : MonoBehaviour
         isExpired = false;
         hasCityMismatch = false;
 
+        // --- ΑΝΤΛΗΣΗ ΔΕΔΟΜΕΝΩΝ ΑΠΟ DAY MANAGER ---
+        int gameYear = 2026;
+        float expiredChance = 0.75f;
+
+        if (DayManager.Instance != null)
+        {
+            DaySettings today = DayManager.Instance.GetCurrentDaySettings();
+            if (today != null)
+            {
+                gameYear = today.currentGameYear;
+                expiredChance = today.expiredErrorChance;
+            }
+        }
+
         if (isForged)
         {
-            // ΝΕΟ: Επιλογή του λάθους βάσει του ποσοστού που έβαλες
-            if (Random.value < expiredErrorChance) isExpired = true;
+            if (Random.value < expiredChance) isExpired = true;
             else hasCityMismatch = true;
         }
 
-        expYear = isExpired ? Random.Range(currentGameYear - 3, currentGameYear) : Random.Range(currentGameYear + 1, currentGameYear + 5);
+        expYear = isExpired ? Random.Range(gameYear - 3, gameYear) : Random.Range(gameYear + 1, gameYear + 5);
         expMonth = Random.Range(1, 13);
         expDay = Random.Range(1, 29);
 

@@ -6,21 +6,6 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class NPCController : MonoBehaviour
 {
-    [Header("Ρυθμίσεις Δυσκολίας - Meters Πλαστογραφίας")]
-    [Range(0f, 1f)]
-    public float citizenForgeryProbability = 0.3f;
-
-    [Range(0f, 1f)]
-    public float merchantForgeryProbability = 0.3f;
-
-    [Header("Κατανομή Λαθών Εμπόρου (Βάρη / Weights)")]
-    public float weightPassportError = 20f;
-    public float weightNameError = 20f;
-    public float weightCityError = 20f;
-    public float weightDateError = 20f;
-    public float weightPurposeError = 20f;
-    public float weightPermitEmblemError = 20f;
-
     private Transform spawnPoint;
     private Transform windowPoint;
     private Transform exitPoint;
@@ -33,8 +18,11 @@ public class NPCController : MonoBehaviour
 
     public void Setup(Transform spawn, Transform window, Transform exit, GameObject[] docs, XRSocketInteractor[] sockets)
     {
-        spawnPoint = spawn; windowPoint = window; exitPoint = exit;
-        documentPrefabs = docs; clientSockets = sockets;
+        spawnPoint = spawn;
+        windowPoint = window;
+        exitPoint = exit;
+        documentPrefabs = docs;
+        clientSockets = sockets;
         StartCoroutine(NPCFlowRoutine());
     }
 
@@ -65,9 +53,15 @@ public class NPCController : MonoBehaviour
             }
         }
 
+        // --- ΑΝΤΛΗΣΗ ΔΕΔΟΜΕΝΩΝ ΑΠΟ ΤΟΝ DAY MANAGER ---
+        DaySettings today = DayManager.Instance != null ? DayManager.Instance.GetCurrentDaySettings() : null;
+
+        float citProb = today != null ? today.citizenForgeryProbability : 0f;
+        float merProb = today != null ? today.merchantForgeryProbability : 0f;
+
         if (spawnedPassport != null && spawnedPermit != null)
         {
-            bool isMerchantForged = Random.value < merchantForgeryProbability;
+            bool isMerchantForged = Random.value < merProb;
 
             if (!isMerchantForged)
             {
@@ -85,15 +79,22 @@ public class NPCController : MonoBehaviour
             }
             else
             {
-                float totalWeight = weightPassportError + weightNameError + weightCityError + weightDateError + weightPurposeError + weightPermitEmblemError;
+                float wPassport = today != null ? today.weightPassportError : 20f;
+                float wName = today != null ? today.weightNameError : 20f;
+                float wCity = today != null ? today.weightCityError : 20f;
+                float wDate = today != null ? today.weightDateError : 20f;
+                float wPurpose = today != null ? today.weightPurposeError : 20f;
+                float wEmblem = today != null ? today.weightPermitEmblemError : 20f;
+
+                float totalWeight = wPassport + wName + wCity + wDate + wPurpose + wEmblem;
                 float randomWeight = Random.Range(0f, totalWeight);
                 int errorType = 0;
 
-                if (randomWeight < weightPassportError) errorType = 0;
-                else if (randomWeight < weightPassportError + weightNameError) errorType = 1;
-                else if (randomWeight < weightPassportError + weightNameError + weightCityError) errorType = 2;
-                else if (randomWeight < weightPassportError + weightNameError + weightCityError + weightDateError) errorType = 3;
-                else if (randomWeight < weightPassportError + weightNameError + weightCityError + weightDateError + weightPurposeError) errorType = 4;
+                if (randomWeight < wPassport) errorType = 0;
+                else if (randomWeight < wPassport + wName) errorType = 1;
+                else if (randomWeight < wPassport + wName + wCity) errorType = 2;
+                else if (randomWeight < wPassport + wName + wCity + wDate) errorType = 3;
+                else if (randomWeight < wPassport + wName + wCity + wDate + wPurpose) errorType = 4;
                 else errorType = 5;
 
                 spawnedPermit.hasCityMismatch = false;
@@ -102,7 +103,6 @@ public class NPCController : MonoBehaviour
                 {
                     spawnedPassport.GenerateData(true);
                     spawnedPassport.currentPurpose = "Trade";
-
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
@@ -114,13 +114,10 @@ public class NPCController : MonoBehaviour
                 {
                     spawnedPassport.GenerateData(false);
                     spawnedPassport.currentPurpose = "Trade";
-
                     int wrongFirstIndex = (System.Array.IndexOf(spawnedPermit.firstNames, spawnedPassport.currentFirstName) + 1) % spawnedPermit.firstNames.Length;
                     int wrongLastIndex = (System.Array.IndexOf(spawnedPermit.lastNames, spawnedPassport.currentLastName) + 1) % spawnedPermit.lastNames.Length;
-
                     spawnedPermit.currentFirstName = spawnedPermit.firstNames[wrongFirstIndex];
                     spawnedPermit.currentLastName = spawnedPermit.lastNames[wrongLastIndex];
-
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
@@ -132,10 +129,8 @@ public class NPCController : MonoBehaviour
                     spawnedPassport.GenerateData(false);
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
-
                     int wrongCityIndex = (System.Array.IndexOf(spawnedPermit.cities, spawnedPassport.originCityName) + 1) % spawnedPermit.cities.Length;
                     spawnedPermit.currentCity = spawnedPermit.cities[wrongCityIndex];
-
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -147,23 +142,16 @@ public class NPCController : MonoBehaviour
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
-
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth - Random.Range(1, 4);
-
-                    if (spawnedPermit.issueMonth <= 0)
-                    {
-                        spawnedPermit.issueMonth += 12;
-                        spawnedPermit.issueYear -= 1;
-                    }
+                    if (spawnedPermit.issueMonth <= 0) { spawnedPermit.issueMonth += 12; spawnedPermit.issueYear -= 1; }
                 }
                 else if (errorType == 4)
                 {
                     spawnedPassport.GenerateData(false);
                     string[] badPurposes = { "Visit", "Work", "Transit" };
                     spawnedPassport.currentPurpose = badPurposes[Random.Range(0, badPurposes.Length)];
-
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
@@ -175,12 +163,9 @@ public class NPCController : MonoBehaviour
                 {
                     spawnedPassport.GenerateData(false);
                     spawnedPassport.currentPurpose = "Trade";
-
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
-
                     spawnedPermit.hasCityMismatch = true;
-
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -192,12 +177,12 @@ public class NPCController : MonoBehaviour
         }
         else if (spawnedWrit != null)
         {
-            // ΣΤΡΑΤΙΩΤΗΣ 
+            // ΣΤΡΑΤΙΩΤΗΣ
         }
         else if (spawnedPassport != null)
         {
             // ΑΠΛΟΣ ΠΟΛΙΤΗΣ
-            bool isCitizenForged = Random.value < citizenForgeryProbability;
+            bool isCitizenForged = Random.value < citProb;
             spawnedPassport.GenerateData(isCitizenForged);
         }
 
@@ -220,7 +205,7 @@ public class NPCController : MonoBehaviour
         }
 
         yield return new WaitForSeconds(1.0f);
-        EvaluatePlayerDecision();
+        EvaluatePlayerDecision(today);
 
         foreach (var doc in spawnedDocuments) if (doc != null) Destroy(doc);
         while (Vector3.Distance(transform.position, exitPoint.position) > 0.05f)
@@ -231,15 +216,18 @@ public class NPCController : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void EvaluatePlayerDecision()
+    private void EvaluatePlayerDecision(DaySettings todaySettings)
     {
-        DynamicPassport passport = null; MerchantPermit permit = null; MercenaryWrit writ = null;
-        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
-        RuleManager ruleManager = FindObjectOfType<RuleManager>(); // ΝΕΟ: Εύρεση του Πίνακα Κανόνων
+        DynamicPassport passport = null;
+        MerchantPermit permit = null;
+        MercenaryWrit writ = null;
 
-        // Παίρνουμε τους σημερινούς κανόνες (αν υπάρχει ο RuleManager)
-        string bannedCity = ruleManager != null ? ruleManager.bannedCity : "";
-        string bannedItem = ruleManager != null ? ruleManager.bannedItem : "";
+        // Διατηρούμε το ScoreManager εφόσον κρατάς το UI
+        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
+
+        // Παίρνουμε τους απαγορευμένους κανόνες από τον DayManager
+        string bannedCity = todaySettings != null ? todaySettings.bannedCity : "";
+        string bannedItem = todaySettings != null ? todaySettings.bannedItem : "";
 
         foreach (var socket in clientSockets)
         {
@@ -265,13 +253,11 @@ public class NPCController : MonoBehaviour
             bool passportValid = !passport.isExpired && !passport.hasCityMismatch;
             bool permitValid = !permit.hasCityMismatch;
 
-            // --- ΝΕΟ: ΕΛΕΓΧΟΣ ΚΑΝΟΝΩΝ ΗΜΕΡΑΣ ΓΙΑ ΕΜΠΟΡΟ ---
             bool isCityBanned = (bannedCity != "" && (passport.originCityName == bannedCity || permit.currentCity == bannedCity));
             bool carriesBannedItem = false;
 
             if (bannedItem != "" && permit.goodsText != null)
             {
-                // Ελέγχει αν το κείμενο με τα εμπορεύματα περιέχει την απαγορευμένη λέξη!
                 carriesBannedItem = permit.goodsText.text.Contains(bannedItem);
             }
 
@@ -287,7 +273,7 @@ public class NPCController : MonoBehaviour
             }
             else
             {
-                Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Λάθος στον Έμπορο! Αιτία -> Ονόματα: {namesMatch}, Πόλεις (Κείμενο): {citiesMatch}, Σκοπός: {purposeMatch}, Ημερ.: {datesMatch}, Διαβατήριο: {passportValid}, Άδεια: {permitValid}, Παραβίαση Κανόνων: {breaksRuleboard} (Πόλη: {isCityBanned}, Εμπόρευμα: {carriesBannedItem})");
+                Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Λάθος στον Έμπορο! Αιτία -> Ονόματα: {namesMatch}, Πόλεις: {citiesMatch}, Σκοπός: {purposeMatch}, Ημερ.: {datesMatch}, Διαβατήριο: {passportValid}, Άδεια: {permitValid}, Παραβίαση Κανόνων: {breaksRuleboard} (Πόλη: {isCityBanned}, Εμπόρευμα: {carriesBannedItem})");
                 if (scoreManager != null) scoreManager.SubtractScore();
             }
         }
@@ -301,9 +287,7 @@ public class NPCController : MonoBehaviour
         }
         else if (passport != null)
         {
-            // --- ΝΕΟ: ΕΛΕΓΧΟΣ ΚΑΝΟΝΩΝ ΗΜΕΡΑΣ ΓΙΑ ΠΟΛΙΤΗ ---
             bool isCityBanned = (bannedCity != "" && passport.originCityName == bannedCity);
-
             bool shouldBeApproved = !passport.isExpired && !passport.hasCityMismatch && !isCityBanned;
             bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
@@ -341,11 +325,7 @@ public class NPCController : MonoBehaviour
     {
         isArrested = true;
         StopAllCoroutines();
-
-        foreach (var doc in spawnedDocuments)
-        {
-            if (doc != null) Destroy(doc);
-        }
+        foreach (var doc in spawnedDocuments) { if (doc != null) Destroy(doc); }
         Destroy(gameObject, 1.5f);
     }
 }
