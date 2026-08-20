@@ -23071,7 +23071,7 @@ MonoBehaviour:
   penObject: {fileID: 554301905}
   gongMalletObject: {fileID: 457668189}
   rulebookObject: {fileID: 1917514174}
-  currentDayIndex: 0
+  currentDayIndex: 5
   days:
   - dayName: 'MERA 1 '
     currentGameYear: 2026
@@ -23101,11 +23101,11 @@ MonoBehaviour:
     bannedItem: 
     letterContent: ERXONTAI KAI MERCHANTS
     hideStamp: 0
-    hideKnife: 0
-    hidePen: 0
+    hideKnife: 1
+    hidePen: 1
     hideGong: 0
     hideGongMallet: 0
-    hideRulebook: 0
+    hideRulebook: 1
     merchantSpawnProbability: 0.6
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -23116,15 +23116,15 @@ MonoBehaviour:
     weightCityError: 40
     weightDateError: 0
     weightPurposeError: 0
-    weightPermitEmblemError: 40
+    weightPermitEmblemError: 0
   - dayName: MERA 3
     currentGameYear: 2026
     bannedCity: 
     bannedItem: 
-    letterContent: 'CHECK KAI GIA YPOGRAFES '
+    letterContent: 'Des ta embems apo tetradio '
     hideStamp: 0
-    hideKnife: 0
-    hidePen: 0
+    hideKnife: 1
+    hidePen: 1
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
@@ -23132,28 +23132,28 @@ MonoBehaviour:
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
     merchantForgeryProbability: 0.3
-    expiredErrorChance: 0.5
-    weightPassportError: 30
-    weightNameError: 40
-    weightCityError: 40
+    expiredErrorChance: 0.301
+    weightPassportError: 40
+    weightNameError: 30
+    weightCityError: 30
     weightDateError: 0
     weightPurposeError: 0
-    weightPermitEmblemError: 40
+    weightPermitEmblemError: 60
   - dayName: MERA 4
     currentGameYear: 2026
     bannedCity: 
     bannedItem: 
     letterContent: 'PERISSOTEROI ME LLATHOS  '
     hideStamp: 0
-    hideKnife: 0
-    hidePen: 0
+    hideKnife: 1
+    hidePen: 1
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
     merchantSpawnProbability: 0.3
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.75
-    merchantForgeryProbability: 0.3
+    merchantForgeryProbability: 0.5
     expiredErrorChance: 0.25
     weightPassportError: 30
     weightNameError: 40
@@ -23163,12 +23163,12 @@ MonoBehaviour:
     weightPermitEmblemError: 40
   - dayName: MERA 5
     currentGameYear: 2026
-    bannedCity: SPARTA
+    bannedCity: VOLOS
     bannedItem: 
-    letterContent: "SPARTA\nDENIED\n "
+    letterContent: "VOLOS \nBANNED\n "
     hideStamp: 0
-    hideKnife: 0
-    hidePen: 0
+    hideKnife: 1
+    hidePen: 1
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
@@ -23201,10 +23201,10 @@ MonoBehaviour:
     expiredErrorChance: 0
     weightPassportError: 0
     weightNameError: 0
-    weightCityError: 100
+    weightCityError: 0
     weightDateError: 0
     weightPurposeError: 0
-    weightPermitEmblemError: 0
+    weightPermitEmblemError: 10000
 --- !u!4 &1839215235
 Transform:
   m_ObjectHideFlags: 0
