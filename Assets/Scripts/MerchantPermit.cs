@@ -10,17 +10,16 @@ public class MerchantPermit : MonoBehaviour
     public TMP_Text paragraphText;
     public TMP_Text dateText;
     public TMP_Text goodsText;
-    public TMP_Text signatureText;
 
     [Header("UI References (Images)")]
     public Image cityEmblemImage;
-    public Image signatureImage;
 
     [Header("Κατάσταση")]
     public string currentFirstName;
     public string currentLastName;
-    public string currentCity;
-    public bool hasCityMismatch = false; // ΝΕΟ: Ελέγχει αν το βουλοκέρι θα έχει λάθος χρώμα
+    public string currentCity;       // Η πραγματική πόλη (για το έμβλημα)
+    public string writtenCityName;   // Η πόλη που αναγράφεται στο κείμενο
+    public bool hasCityMismatch = false;
 
     [Header("Ακριβείς Ημερομηνίες")]
     public int issueDay;
@@ -33,11 +32,11 @@ public class MerchantPermit : MonoBehaviour
 
     public readonly string[] firstNames = { "NIKOLAS", "THOMAS", "WILLIAM", "JOHN", "EDWARD", "ROBERT", "MARY", "ELIZABETH", "ANNE" };
     public readonly string[] lastNames = { "MOSS", "SMITH", "BAKER", "CLARK", "WRIGHT", "TURNER", "COOPER" };
-    public readonly string[] cities = { "VOLOS", "ATHENS", "SPARTA", "THEBES", "CORINTH" };
-
-    private readonly Color[] cityColors = { Color.blue, new Color(0f, 0.5f, 0f), Color.red, Color.magenta, Color.gray };
-    private readonly Color[] signatureColors = { Color.black, new Color(0.1f, 0.1f, 0.4f), new Color(0.4f, 0.1f, 0.1f), new Color(0.2f, 0.2f, 0.2f) };
+    public readonly string[] cities = { "Lamia", "ATHENS", "THESSALONIKI", "VOLOS", "LARISSA" };
     private readonly string[] items = { "Fine Wool (Rolls)", "Salt (Barrels)", "Dried Fruits (Chests)", "Spices (Sacks)", "Olive Oil (Jars)", "Copper Ingots", "Silver Coins" };
+
+    [Header("Εμβλήματα Πόλεων")]
+    public Sprite[] cityEmblems;
 
     private void Awake()
     {
@@ -48,13 +47,41 @@ public class MerchantPermit : MonoBehaviour
     {
         currentFirstName = firstNames[Random.Range(0, firstNames.Length)];
         currentLastName = lastNames[Random.Range(0, lastNames.Length)];
-        currentCity = cities[Random.Range(0, cities.Length)];
+
+        int cityIndex = Random.Range(0, cities.Length);
+        currentCity = cities[cityIndex];
+        writtenCityName = currentCity; // Αρχικά είναι ίδια
+
         hasCityMismatch = false;
 
         issueDay = Random.Range(1, 29);
         issueMonth = Random.Range(1, 13);
-        issueYear = 2026 - Random.Range(1, 4);
 
+        int gameYear = 2026;
+        if (DayManager.Instance != null)
+        {
+            DaySettings today = DayManager.Instance.GetCurrentDaySettings();
+            if (today != null) gameYear = today.currentGameYear;
+        }
+
+        issueYear = gameYear - Random.Range(1, 4);
+
+        UpdateUI();
+    }
+
+    // Μέθοδος για να το καλεί ο NPCController αν θέλει να δημιουργήσει πλαστογραφία
+    public void ApplyCityMismatch()
+    {
+        hasCityMismatch = true;
+        int cityIndex = System.Array.IndexOf(cities, currentCity);
+        int wrongIndex = Random.Range(0, cities.Length);
+
+        while (wrongIndex == cityIndex)
+        {
+            wrongIndex = Random.Range(0, cities.Length);
+        }
+
+        writtenCityName = cities[wrongIndex];
         UpdateUI();
     }
 
@@ -70,9 +97,10 @@ public class MerchantPermit : MonoBehaviour
         if (titleText != null) titleText.text = "Merchant's Manifest";
         if (nameText != null) nameText.text = $"{currentFirstName} {currentLastName}";
 
+        // Το Κείμενο τυπώνει τη γραπτή πόλη (writtenCityName)
         if (paragraphText != null)
         {
-            paragraphText.text = $"Be it Known that the bearer\n\n\n\na registered merchant\nof the City of {currentCity}, is authorised to travel\nand trade within the Kingdom's lands";
+            paragraphText.text = $"Be it Known that the bearer\n\n\n\na registered merchant\nof the City of {writtenCityName}, is authorised to travel\nand trade within the Kingdom's lands";
         }
 
         if (dateText != null)
@@ -91,29 +119,16 @@ public class MerchantPermit : MonoBehaviour
             goodsText.text = inventoryString;
         }
 
-        if (signatureText != null) signatureText.text = "By the Authority of the Guild,\n\nWarden of the Guild";
-
-        // ΝΕΟ: Λογική για λάθος χρώμα στο βουλοκέρι
+        // Το Έμβλημα διαβάζει την πραγματική πόλη (currentCity)
         if (cityEmblemImage != null)
         {
-            Color assignedCityColor = Color.white;
             int cityIndex = System.Array.IndexOf(cities, currentCity);
-
-            if (cityIndex >= 0)
+            if (cityIndex >= 0 && cityEmblems != null && cityIndex < cityEmblems.Length)
             {
-                assignedCityColor = cityColors[cityIndex];
-
-                if (hasCityMismatch)
-                {
-                    int wrongColorIndex = Random.Range(0, cityColors.Length);
-                    while (wrongColorIndex == cityIndex) wrongColorIndex = Random.Range(0, cityColors.Length);
-                    assignedCityColor = cityColors[wrongColorIndex];
-                }
+                cityEmblemImage.sprite = cityEmblems[cityIndex];
+                cityEmblemImage.color = Color.white;
             }
-            cityEmblemImage.color = assignedCityColor;
         }
-
-        if (signatureImage != null) signatureImage.color = signatureColors[Random.Range(0, signatureColors.Length)];
     }
 
     public void SetStampDecision(VelocityStampTool.StampDecision decision)

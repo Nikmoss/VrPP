@@ -1,23 +1,30 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
+[RequireComponent(typeof(XRBaseInteractable))]
 public class DynamicPassport : MonoBehaviour
 {
+    [Header("Οπτικά Ανοιγοκλεισίματος")]
+    public GameObject closedVisual;
+    public GameObject openVisual;
+    public AudioSource flipSound;
+
     [Header("UI References (Texts)")]
     public TMP_Text titleText;
     public TMP_Text paragraphText;
     public TMP_Text statsText;
-    public TMP_Text signatureText;
 
     [Header("UI References (Images)")]
     public Image cityEmblemImage;
-    public Image lordSignatureImage;
 
-    [Header("Κατάσταση (Διαβάζεται από άλλα scripts)")]
+    [Header("Κατάσταση")]
     public string currentFirstName;
     public string currentLastName;
-    public string originCityName;
+    public string originCityName;    // Η πραγματική πόλη (για το έμβλημα)
+    public string writtenCityName;   // Η πόλη που αναγράφεται στο κείμενο
     public string currentPurpose;
     public string dest;
     public bool isForged;
@@ -38,16 +45,38 @@ public class DynamicPassport : MonoBehaviour
 
     public readonly string[] firstNames = { "NIKOLAS", "THOMAS", "WILLIAM", "JOHN", "EDWARD", "ROBERT", "MARY", "ELIZABETH", "ANNE" };
     public readonly string[] lastNames = { "MOSS", "SMITH", "BAKER", "CLARK", "WRIGHT", "TURNER", "COOPER" };
-    public readonly string[] destinations = { "SALOUGA", "ATHENS", "THESSALONIKI", "VOLOS", "LARISSA" };
+    public readonly string[] destinations = { "VOLOS", "ATHENS", "SPARTA", "THEBES", "CORINTH", };
     public readonly string[] purposes = { "Visit", "Trade", "Work", "Transit" };
+    public readonly string[] cities = { "Lamia", "ATHENS", "THESSALONIKI", "VOLOS", "LARISSA" };
 
-    public readonly string[] cities = { "VOLOS", "ATHENS", "SPARTA", "THEBES", "CORINTH" };
-    private readonly Color[] cityColors = { Color.blue, new Color(0f, 0.5f, 0f), Color.red, Color.magenta, Color.gray };
-    private readonly Color[] signatureColors = { Color.black, new Color(0.1f, 0.1f, 0.4f), new Color(0.4f, 0.1f, 0.1f), new Color(0.2f, 0.2f, 0.2f) };
+    [Header("Εμβλήματα Πόλεων")]
+    public Sprite[] cityEmblems;
+
+    private XRBaseInteractable interactable;
+    private bool isOpen = false;
 
     private void Awake()
     {
+        interactable = GetComponent<XRBaseInteractable>();
         GenerateData(false);
+        UpdateVisuals();
+    }
+
+    private void OnEnable() { interactable.activated.AddListener(OnTriggerPressed); }
+    private void OnDisable() { interactable.activated.RemoveListener(OnTriggerPressed); }
+    private void OnTriggerPressed(ActivateEventArgs args) { TogglePassport(); }
+
+    public void TogglePassport()
+    {
+        isOpen = !isOpen;
+        if (flipSound != null) flipSound.Play();
+        UpdateVisuals();
+    }
+
+    private void UpdateVisuals()
+    {
+        if (closedVisual != null) closedVisual.SetActive(!isOpen);
+        if (openVisual != null) openVisual.SetActive(isOpen);
     }
 
     public void GenerateData(bool makeItForged)
@@ -61,7 +90,6 @@ public class DynamicPassport : MonoBehaviour
         isExpired = false;
         hasCityMismatch = false;
 
-        // --- ΑΝΤΛΗΣΗ ΔΕΔΟΜΕΝΩΝ ΑΠΟ DAY MANAGER ---
         int gameYear = 2026;
         float expiredChance = 0.75f;
 
@@ -91,6 +119,15 @@ public class DynamicPassport : MonoBehaviour
 
         int cityIndex = Random.Range(0, cities.Length);
         originCityName = cities[cityIndex];
+        writtenCityName = originCityName; // Αρχικά είναι ίδια
+
+        // Αν είναι πλαστό, αλλάζουμε ΤΟ ΚΕΙΜΕΝΟ, όχι το έμβλημα
+        if (hasCityMismatch)
+        {
+            int wrongIndex = Random.Range(0, cities.Length);
+            while (wrongIndex == cityIndex) wrongIndex = Random.Range(0, cities.Length);
+            writtenCityName = cities[wrongIndex];
+        }
 
         UpdateUI();
     }
@@ -100,40 +137,32 @@ public class DynamicPassport : MonoBehaviour
         string expiryDateStr = $"{GetOrdinal(expDay)} day of {GetMonthName(expMonth)}, {expYear}";
         string issueDateStr = $"{GetOrdinal(issueDay)} day of {GetMonthName(issueMonth)}, {issueYear}";
 
-        Color assignedCityColor = Color.white;
-        int cityIndex = System.Array.IndexOf(cities, originCityName);
-
-        if (cityIndex >= 0)
+        // Το Έμβλημα διαβάζει την πραγματική πόλη (originCityName)
+        if (cityEmblemImage != null)
         {
-            assignedCityColor = cityColors[cityIndex];
-
-            if (hasCityMismatch)
+            int cityIndex = System.Array.IndexOf(cities, originCityName);
+            if (cityIndex >= 0 && cityEmblems != null && cityIndex < cityEmblems.Length)
             {
-                int wrongColorIndex = Random.Range(0, cityColors.Length);
-                while (wrongColorIndex == cityIndex) wrongColorIndex = Random.Range(0, cityColors.Length);
-                assignedCityColor = cityColors[wrongColorIndex];
+                cityEmblemImage.sprite = cityEmblems[cityIndex];
+                cityEmblemImage.color = Color.white;
             }
         }
-
-        if (cityEmblemImage != null) cityEmblemImage.color = assignedCityColor;
 
         if (titleText != null) titleText.text = "Letter of Safe Conduct";
         if (paragraphText != null) paragraphText.text = "Γνωστοποιείται ότι ο κομιστής\nτου παρόντος, που ονομάζεται\nπαρακάτω, είναι ειρηνικός\nταξιδιώτης. Επιτρέπεται η\nελεύθερη διέλευσή του χωρίς\nκώλυμα.";
 
+        // Το Κείμενο τυπώνει τη γραπτή πόλη (writtenCityName)
         if (statsText != null)
         {
             statsText.text =
                 $"Name of the Bearer: {currentFirstName} {currentLastName}\n" +
-                $"Place of Origin: {originCityName}\n" +
+                $"Place of Origin: {writtenCityName}\n" +
                 $"Destination: {dest}\n" +
                 $"Purpose of Travel: {currentPurpose}\n" +
                 $"Accompanied by: None\n" +
                 $"Date Issued: {issueDateStr}\n" +
                 $"Valid Until: {expiryDateStr}";
         }
-
-        if (signatureText != null) signatureText.text = $"By order of the Sheriff of {originCityName},";
-        if (lordSignatureImage != null) lordSignatureImage.color = signatureColors[Random.Range(0, signatureColors.Length)];
     }
 
     public void SetStampDecision(VelocityStampTool.StampDecision decision)
@@ -141,7 +170,6 @@ public class DynamicPassport : MonoBehaviour
         hasBeenStamped = true;
         lastAppliedStamp = decision;
     }
-
     private string GetOrdinal(int num)
     {
         if (num <= 0) return num.ToString();

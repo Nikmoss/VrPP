@@ -2515,6 +2515,41 @@ MonoBehaviour:
       m_Flags: 0
     m_Reference: {fileID: 0}
   targetHeadPosition: {fileID: 1913077838}
+--- !u!114 &254941940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 254941927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 319bd28a803c4ec419167e07fa659b9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  dayAdvancer: {fileID: 1258534639}
+  resetButtonAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Reset Button
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: f5f91c9c-03c2-443e-b08e-d0040c6c0f35
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings:
+      - m_Name: 
+        m_Id: 0194ddbe-bded-4e4d-91e5-8ef1318204dd
+        m_Path: <HID::Sony Interactive Entertainment PlayStation VR2 Sense Controller
+          (L)>/button12
+        m_Interactions: 
+        m_Processors: 
+        m_Groups: 
+        m_Action: Reset Button
+        m_Flags: 0
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  resetSound: {fileID: 0}
 --- !u!1 &255623853
 GameObject:
   m_ObjectHideFlags: 0
@@ -9552,7 +9587,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!64 &467636926
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -12263,6 +12298,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 254941934}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 254941940}
     - targetCorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2080916902}
@@ -16395,6 +16433,12 @@ MonoBehaviour:
   flameParticles: {fileID: 1082766223}
   candleLight: {fileID: 2028117597}
   transitionDelay: 3
+  toolsToReset:
+  - {fileID: 1917514178}
+  - {fileID: 554301913}
+  - {fileID: 2083983084}
+  - {fileID: 457668196}
+  - {fileID: 1008001387}
 --- !u!114 &1258534640
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22095,6 +22139,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 594214fa1d447b947b86a6263f5b8e3c, type: 3}
+--- !u!1001 &1722035315
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.50148
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.73500013
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.27229938
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 625399996317877177, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+      propertyPath: m_Name
+      value: EmblemBook
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
 --- !u!1 &1729265036
 GameObject:
   m_ObjectHideFlags: 0
@@ -22115,7 +22216,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1729265037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22964,6 +23065,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   letterText: {fileID: 585488281}
+  stampObject: {fileID: 1008001383}
+  knifeObject: {fileID: 2083983077}
+  gongObject: {fileID: 1608731459}
+  penObject: {fileID: 554301905}
+  gongMalletObject: {fileID: 457668189}
+  rulebookObject: {fileID: 1917514174}
   currentDayIndex: 0
   days:
   - dayName: 'MERA 1 '
@@ -22971,6 +23078,12 @@ MonoBehaviour:
     bannedCity: 
     bannedItem: 
     letterContent: 'OLA KOMPLE MONO MHN EIANI LIGMENO '
+    hideStamp: 0
+    hideKnife: 1
+    hidePen: 1
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 1
     merchantSpawnProbability: 0
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -22987,6 +23100,12 @@ MonoBehaviour:
     bannedCity: 
     bannedItem: 
     letterContent: ERXONTAI KAI MERCHANTS
+    hideStamp: 0
+    hideKnife: 0
+    hidePen: 0
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 0
     merchantSpawnProbability: 0.6
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -23003,6 +23122,12 @@ MonoBehaviour:
     bannedCity: 
     bannedItem: 
     letterContent: 'CHECK KAI GIA YPOGRAFES '
+    hideStamp: 0
+    hideKnife: 0
+    hidePen: 0
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 0
     merchantSpawnProbability: 0.6
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -23019,6 +23144,12 @@ MonoBehaviour:
     bannedCity: 
     bannedItem: 
     letterContent: 'PERISSOTEROI ME LLATHOS  '
+    hideStamp: 0
+    hideKnife: 0
+    hidePen: 0
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 0
     merchantSpawnProbability: 0.3
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.75
@@ -23035,6 +23166,12 @@ MonoBehaviour:
     bannedCity: SPARTA
     bannedItem: 
     letterContent: "SPARTA\nDENIED\n "
+    hideStamp: 0
+    hideKnife: 0
+    hidePen: 0
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 0
     merchantSpawnProbability: 0.3
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.75
@@ -23046,6 +23183,28 @@ MonoBehaviour:
     weightDateError: 0
     weightPurposeError: 0
     weightPermitEmblemError: 40
+  - dayName: TEST
+    currentGameYear: 2026
+    bannedCity: 
+    bannedItem: 
+    letterContent: TEST
+    hideStamp: 0
+    hideKnife: 0
+    hidePen: 0
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 0
+    merchantSpawnProbability: 1
+    mercenarySpawnProbability: 0
+    citizenForgeryProbability: 0
+    merchantForgeryProbability: 1
+    expiredErrorChance: 0
+    weightPassportError: 0
+    weightNameError: 0
+    weightCityError: 100
+    weightDateError: 0
+    weightPurposeError: 0
+    weightPermitEmblemError: 0
 --- !u!4 &1839215235
 Transform:
   m_ObjectHideFlags: 0
@@ -23750,6 +23909,16 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!1 &1917514174 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 625399996317877177, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+  m_PrefabInstance: {fileID: 1722035315}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1917514178 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 108024620129458545, guid: cd6c8d25c3def5b4d9e51f23c606e18e, type: 3}
+  m_PrefabInstance: {fileID: 1722035315}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1917951888 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 9e4934a98a6565342b4d756769d70c88, type: 3}
@@ -24445,6 +24614,7 @@ MonoBehaviour:
   flameParticles: {fileID: 356679431}
   candleLight: {fileID: 1873711861}
   transitionDelay: 3
+  toolsToReset: []
 --- !u!114 &2008516856
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28639,3 +28809,4 @@ SceneRoots:
   - {fileID: 110946919}
   - {fileID: 1959597554}
   - {fileID: 1877372456}
+  - {fileID: 1722035315}

@@ -20,6 +20,16 @@ public class DaySettings
     [TextArea(5, 10)]
     public string letterContent = "Ministry of Admission\n\nDirectives for today:\n- Standard protocol.";
 
+    [Header("Εξαφάνιση Εργαλείων (Τικ = Κρύβεται)")]
+    [Tooltip("Τσέκαρε το κουτάκι για να ΕΞΑΦΑΝΙΣΕΙΣ το αντικείμενο αυτή τη μέρα.")]
+    public bool hideStamp = true;
+    public bool hideKnife = true;
+    public bool hidePen = true;
+    public bool hideGong = true;
+    public bool hideGongMallet = true;
+    public bool hideRulebook = true;
+
+
     [Header("Πιθανότητες Εμφάνισης (Spawns)")]
     [Range(0f, 1f)] public float merchantSpawnProbability = 0.3f;
     [Range(0f, 1f)] public float mercenarySpawnProbability = 0.1f;
@@ -46,8 +56,16 @@ public class DayManager : MonoBehaviour
 {
     public static DayManager Instance { get; private set; }
 
-    [Header("Αναφορές")]
+    [Header("Αναφορές UI")]
     public TMP_Text letterText;
+
+    [Header("Αναφορές Εργαλείων (GameObjects)")]
+    public GameObject stampObject;
+    public GameObject knifeObject;
+    public GameObject gongObject;
+    public GameObject penObject;
+    public GameObject gongMalletObject;
+    public GameObject rulebookObject;
 
     [Header("Ρυθμίσεις Ημερών")]
     public int currentDayIndex = 0;
@@ -78,6 +96,15 @@ public class DayManager : MonoBehaviour
         {
             letterText.text = today.letterContent;
         }
+
+        // --- ΕΝΕΡΓΟΠΟΙΗΣΗ / ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ ΕΡΓΑΛΕΙΩΝ ---
+        // Επειδή τικ (true) σημαίνει "hide" (κρύψε), βάζουμε ! (not) για το SetActive.
+        if (stampObject != null) stampObject.SetActive(!today.hideStamp);
+        if (penObject != null) penObject.SetActive(!today.hidePen);
+        if (knifeObject != null) knifeObject.SetActive(!today.hideKnife);
+        if (gongObject != null) gongObject.SetActive(!today.hideGong);
+        if (gongMalletObject != null) gongMalletObject.SetActive(!today.hideGongMallet);
+        if (rulebookObject != null) rulebookObject.SetActive(!today.hideRulebook);
     }
 
     public void NextDay()

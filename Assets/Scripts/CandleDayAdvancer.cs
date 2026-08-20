@@ -17,13 +17,34 @@ public class CandleDayAdvancer : MonoBehaviour
     [Tooltip("Πόσα δευτερόλεπτα θα μείνει σβηστό το κερί (και το δωμάτιο σκοτεινό)")]
     public float transitionDelay = 3.0f;
 
+    [Header("Επαναφορά Εργαλείων (Reset)")]
+    [Tooltip("Βάλε εδώ το Rulebook, τη Σφραγίδα, το Μαχαίρι κλπ. για να γυρνάνε στη θέση τους!")]
+    public Transform[] toolsToReset;
+
+    private Vector3[] initialToolPositions;
+    private Quaternion[] initialToolRotations;
+
     private XRBaseInteractable interactable;
     private bool isTransitioning = false;
 
     private void Awake()
     {
-        // Πλέον βρίσκει αυτόματα το XR Grab Interactable που βάλαμε
         interactable = GetComponent<XRBaseInteractable>();
+    }
+
+    private void Start()
+    {
+        initialToolPositions = new Vector3[toolsToReset.Length];
+        initialToolRotations = new Quaternion[toolsToReset.Length];
+
+        for (int i = 0; i < toolsToReset.Length; i++)
+        {
+            if (toolsToReset[i] != null)
+            {
+                initialToolPositions[i] = toolsToReset[i].position;
+                initialToolRotations[i] = toolsToReset[i].rotation;
+            }
+        }
     }
 
     private void OnEnable()
@@ -38,7 +59,6 @@ public class CandleDayAdvancer : MonoBehaviour
 
     private void OnFlameGrabbed(SelectEnterEventArgs args)
     {
-        // Αν ήδη αλλάζουμε μέρα, αγνόησε τα πολλαπλά πατήματα
         if (!isTransitioning)
         {
             StartCoroutine(DayTransitionRoutine());
@@ -49,14 +69,11 @@ public class CandleDayAdvancer : MonoBehaviour
     {
         isTransitioning = true;
 
-        // 1. ΣΒΗΣΙΜΟ: Κλείνουμε τη φλόγα και το φως
         if (flameParticles != null) flameParticles.SetActive(false);
         if (candleLight != null) candleLight.enabled = false;
 
-        // 2. ΑΝΑΜΟΝΗ: Το δωμάτιο μένει στο σκοτάδι
         yield return new WaitForSeconds(transitionDelay);
 
-        // 3. ΕΝΗΜΕΡΩΣΗ ΣΥΣΤΗΜΑΤΩΝ: Πάμε στην επόμενη μέρα και μηδενίζουμε το σκορ
         if (DayManager.Instance != null)
         {
             DayManager.Instance.NextDay();
@@ -68,17 +85,41 @@ public class CandleDayAdvancer : MonoBehaviour
             scoreManager.ResetDailyStats();
         }
 
-        // --- ΝΕΟ: Ειδοποιούμε τον Spawner να διαγράψει NPC και χαρτιά ---
         NPCSpawner spawner = FindObjectOfType<NPCSpawner>();
         if (spawner != null)
         {
             spawner.ResetSpawner();
         }
 
-        // 4. ΑΝΑΜΜΑ: Ανάβουμε ξανά τη φλόγα
+        // Καλούμε τη δημόσια μέθοδο για να καθαρίσει το γραφείο!
+        ResetAllTools();
+
         if (flameParticles != null) flameParticles.SetActive(true);
         if (candleLight != null) candleLight.enabled = true;
 
         isTransitioning = false;
+    }
+
+    /// <summary>
+    /// Επαναφέρει όλα τα εργαλεία στην αρχική τους θέση.
+    /// Είναι public για να μπορεί να κληθεί και από άλλα κουμπιά (π.χ. Emergency Reset).
+    /// </summary>
+    public void ResetAllTools()
+    {
+        for (int i = 0; i < toolsToReset.Length; i++)
+        {
+            if (toolsToReset[i] != null)
+            {
+                toolsToReset[i].position = initialToolPositions[i];
+                toolsToReset[i].rotation = initialToolRotations[i];
+
+                Rigidbody rb = toolsToReset[i].GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+            }
+        }
     }
 }

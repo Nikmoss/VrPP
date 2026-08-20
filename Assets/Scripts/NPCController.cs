@@ -70,6 +70,7 @@ public class NPCController : MonoBehaviour
 
                 spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                 spawnedPermit.currentCity = spawnedPassport.originCityName;
+                spawnedPermit.writtenCityName = spawnedPassport.originCityName; // ΣΥΓΧΡΟΝΙΣΜΟΣ
                 spawnedPermit.hasCityMismatch = false;
 
                 spawnedPermit.issueDay = spawnedPassport.issueDay;
@@ -105,6 +106,7 @@ public class NPCController : MonoBehaviour
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.writtenCityName = spawnedPassport.originCityName; // ΣΥΓΧΡΟΝΙΣΜΟΣ
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -119,6 +121,7 @@ public class NPCController : MonoBehaviour
                     spawnedPermit.currentFirstName = spawnedPermit.firstNames[wrongFirstIndex];
                     spawnedPermit.currentLastName = spawnedPermit.lastNames[wrongLastIndex];
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.writtenCityName = spawnedPassport.originCityName; // ΣΥΓΧΡΟΝΙΣΜΟΣ
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -126,11 +129,17 @@ public class NPCController : MonoBehaviour
                 }
                 else if (errorType == 2)
                 {
+                    // CITY ERROR: Ίδιο Έμβλημα, Διαφορετικό Κείμενο (Όπως το ζήτησες)
                     spawnedPassport.GenerateData(false);
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
+
+                    spawnedPermit.currentCity = spawnedPassport.originCityName; // Κρατάει ίδιο Έμβλημα
+
+                    // Αλλάζει μόνο το κείμενο της πόλης (writtenCityName)
                     int wrongCityIndex = (System.Array.IndexOf(spawnedPermit.cities, spawnedPassport.originCityName) + 1) % spawnedPermit.cities.Length;
-                    spawnedPermit.currentCity = spawnedPermit.cities[wrongCityIndex];
+                    spawnedPermit.writtenCityName = spawnedPermit.cities[wrongCityIndex];
+
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -142,6 +151,7 @@ public class NPCController : MonoBehaviour
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.writtenCityName = spawnedPassport.originCityName; // ΣΥΓΧΡΟΝΙΣΜΟΣ
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth - Random.Range(1, 4);
@@ -154,6 +164,7 @@ public class NPCController : MonoBehaviour
                     spawnedPassport.currentPurpose = badPurposes[Random.Range(0, badPurposes.Length)];
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.writtenCityName = spawnedPassport.originCityName; // ΣΥΓΧΡΟΝΙΣΜΟΣ
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -165,6 +176,7 @@ public class NPCController : MonoBehaviour
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
                     spawnedPermit.currentCity = spawnedPassport.originCityName;
+                    spawnedPermit.writtenCityName = spawnedPassport.originCityName; // ΣΥΓΧΡΟΝΙΣΜΟΣ
                     spawnedPermit.hasCityMismatch = true;
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
@@ -222,10 +234,8 @@ public class NPCController : MonoBehaviour
         MerchantPermit permit = null;
         MercenaryWrit writ = null;
 
-        // Διατηρούμε το ScoreManager εφόσον κρατάς το UI
         ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
 
-        // Παίρνουμε τους απαγορευμένους κανόνες από τον DayManager
         string bannedCity = todaySettings != null ? todaySettings.bannedCity : "";
         string bannedItem = todaySettings != null ? todaySettings.bannedItem : "";
 
@@ -243,7 +253,10 @@ public class NPCController : MonoBehaviour
         if (passport != null && permit != null)
         {
             bool namesMatch = (passport.currentFirstName == permit.currentFirstName) && (passport.currentLastName == permit.currentLastName);
-            bool citiesMatch = (passport.originCityName == permit.currentCity);
+
+            // ΕΛΕΓΧΟΣ ΚΕΙΜΕΝΟΥ ΚΑΙ ΕΜΒΛΗΜΑΤΟΣ (για να καταλάβει το παιχνίδι ότι υπάρχει λάθος!)
+            bool citiesMatch = (passport.originCityName == permit.currentCity) && (passport.writtenCityName == permit.writtenCityName);
+
             bool purposeMatch = (passport.currentPurpose == "Trade");
 
             bool permitNotTooEarly = CompareDates(passport.issueDay, passport.issueMonth, passport.issueYear, permit.issueDay, permit.issueMonth, permit.issueYear) <= 0;
