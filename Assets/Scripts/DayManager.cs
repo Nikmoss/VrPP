@@ -16,6 +16,10 @@ public class DaySettings
     [Tooltip("Το αντικείμενο που απαγορεύεται σήμερα (κενό αν δεν υπάρχει)")]
     public string bannedItem = "";
 
+    [Header("Νέοι Κανόνες για τον Άβακα")]
+    [Tooltip("Ποια νέα σύμβολα θα 'χαραχτούν' σήμερα στο πάνω μέρος του Άβακα;")]
+    public List<CityStatsManager.ErrorType> newRulesToCarveToday = new List<CityStatsManager.ErrorType>();
+
     [Header("Κείμενο Γράμματος")]
     [TextArea(5, 10)]
     public string letterContent = "Ministry of Admission\n\nDirectives for today:\n- Standard protocol.";
@@ -28,7 +32,6 @@ public class DaySettings
     public bool hideGong = true;
     public bool hideGongMallet = true;
     public bool hideRulebook = true;
-
 
     [Header("Πιθανότητες Εμφάνισης (Spawns)")]
     [Range(0f, 1f)] public float merchantSpawnProbability = 0.3f;
@@ -98,13 +101,22 @@ public class DayManager : MonoBehaviour
         }
 
         // --- ΕΝΕΡΓΟΠΟΙΗΣΗ / ΑΠΕΝΕΡΓΟΠΟΙΗΣΗ ΕΡΓΑΛΕΙΩΝ ---
-        // Επειδή τικ (true) σημαίνει "hide" (κρύψε), βάζουμε ! (not) για το SetActive.
         if (stampObject != null) stampObject.SetActive(!today.hideStamp);
         if (penObject != null) penObject.SetActive(!today.hidePen);
         if (knifeObject != null) knifeObject.SetActive(!today.hideKnife);
         if (gongObject != null) gongObject.SetActive(!today.hideGong);
         if (gongMalletObject != null) gongMalletObject.SetActive(!today.hideGongMallet);
         if (rulebookObject != null) rulebookObject.SetActive(!today.hideRulebook);
+
+        // --- ΧΑΡΑΞΗ ΝΕΩΝ ΣΥΜΒΟΛΩΝ ΣΤΟΝ ΑΒΑΚΑ ---
+        CityStatsManager cityStats = FindObjectOfType<CityStatsManager>();
+        if (cityStats != null && today.newRulesToCarveToday != null)
+        {
+            foreach (var rule in today.newRulesToCarveToday)
+            {
+                cityStats.RevealNewLegendRule(rule);
+            }
+        }
     }
 
     public void NextDay()

@@ -129,16 +129,12 @@ public class NPCController : MonoBehaviour
                 }
                 else if (errorType == 2)
                 {
-                    // CITY TEXT ERROR: Ίδιο Έμβλημα, Διαφορετικό Κείμενο
                     spawnedPassport.GenerateData(false);
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
-
-                    spawnedPermit.currentCity = spawnedPassport.originCityName; // Κρατάει ίδιο Έμβλημα
-
+                    spawnedPermit.currentCity = spawnedPassport.originCityName;
                     int wrongCityIndex = (System.Array.IndexOf(spawnedPermit.cities, spawnedPassport.originCityName) + 1) % spawnedPermit.cities.Length;
-                    spawnedPermit.writtenCityName = spawnedPermit.cities[wrongCityIndex]; // Αλλάζει κείμενο
-
+                    spawnedPermit.writtenCityName = spawnedPermit.cities[wrongCityIndex];
                     spawnedPermit.issueDay = spawnedPassport.issueDay;
                     spawnedPermit.issueMonth = spawnedPassport.issueMonth + 1;
                     spawnedPermit.issueYear = spawnedPassport.issueYear;
@@ -171,18 +167,13 @@ public class NPCController : MonoBehaviour
                 }
                 else if (errorType == 5)
                 {
-                    // PERMIT EMBLEM ERROR: Σωστό κείμενο, Λάθος Έμβλημα (PNG)
                     spawnedPassport.GenerateData(false);
                     spawnedPassport.currentPurpose = "Trade";
                     spawnedPermit.ForceNames(spawnedPassport.currentFirstName, spawnedPassport.currentLastName);
-
-                    // Το κείμενο είναι ΣΩΣΤΟ
                     spawnedPermit.writtenCityName = spawnedPassport.originCityName;
 
-                    // Το έμβλημα είναι ΛΑΘΟΣ
                     int correctIndex = System.Array.IndexOf(spawnedPermit.cities, spawnedPassport.originCityName);
                     int wrongEmblemIndex = Random.Range(0, spawnedPermit.cities.Length);
-
                     while (wrongEmblemIndex == correctIndex)
                     {
                         wrongEmblemIndex = Random.Range(0, spawnedPermit.cities.Length);
@@ -246,6 +237,7 @@ public class NPCController : MonoBehaviour
         MercenaryWrit writ = null;
 
         ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
+        CityStatsManager cityStats = FindObjectOfType<CityStatsManager>();
 
         string bannedCity = todaySettings != null ? todaySettings.bannedCity : "";
         string bannedItem = todaySettings != null ? todaySettings.bannedItem : "";
@@ -264,10 +256,7 @@ public class NPCController : MonoBehaviour
         if (passport != null && permit != null)
         {
             bool namesMatch = (passport.currentFirstName == permit.currentFirstName) && (passport.currentLastName == permit.currentLastName);
-
-            // ΕΛΕΓΧΟΣ ΚΕΙΜΕΝΟΥ ΚΑΙ ΕΜΒΛΗΜΑΤΟΣ 
             bool citiesMatch = (passport.originCityName == permit.currentCity) && (passport.writtenCityName == permit.writtenCityName);
-
             bool purposeMatch = (passport.currentPurpose == "Trade");
 
             bool permitNotTooEarly = CompareDates(passport.issueDay, passport.issueMonth, passport.issueYear, permit.issueDay, permit.issueMonth, permit.issueYear) <= 0;
@@ -278,13 +267,7 @@ public class NPCController : MonoBehaviour
             bool permitValid = !permit.hasCityMismatch;
 
             bool isCityBanned = (bannedCity != "" && (passport.originCityName == bannedCity || permit.currentCity == bannedCity));
-            bool carriesBannedItem = false;
-
-            if (bannedItem != "" && permit.goodsText != null)
-            {
-                carriesBannedItem = permit.goodsText.text.Contains(bannedItem);
-            }
-
+            bool carriesBannedItem = (bannedItem != "" && permit.goodsText != null && permit.goodsText.text.Contains(bannedItem));
             bool breaksRuleboard = isCityBanned || carriesBannedItem;
 
             bool shouldBeApproved = namesMatch && citiesMatch && purposeMatch && datesMatch && passportValid && permitValid && !breaksRuleboard;
@@ -292,38 +275,54 @@ public class NPCController : MonoBehaviour
 
             if (shouldBeApproved == playerApproved)
             {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ορθή απόφαση για τον Έμπορο.");
                 if (scoreManager != null) scoreManager.AddScore();
             }
-            else
+            else if (!shouldBeApproved && playerApproved)
             {
-                Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Λάθος στον Έμπορο! Αιτία -> Ονόματα: {namesMatch}, Πόλεις: {citiesMatch}, Σκοπός: {purposeMatch}, Ημερ.: {datesMatch}, Διαβατήριο: {passportValid}, Άδεια: {permitValid}, Παραβίαση Κανόνων: {breaksRuleboard} (Πόλη: {isCityBanned}, Εμπόρευμα: {carriesBannedItem})");
+                // Ο παίκτης ΕΒΑΛΕ ΜΕΣΑ κάποιον με πλαστά! (Ρουλέτα!)
                 if (scoreManager != null) scoreManager.SubtractScore();
+                if (cityStats != null)
+                {
+                    if (!namesMatch) cityStats.ReportError(CityStatsManager.ErrorType.WrongName);
+                    else if (!datesMatch || passport.isExpired) cityStats.ReportError(CityStatsManager.ErrorType.Expired);
+                    else if (!citiesMatch || !passportValid || !permitValid) cityStats.ReportError(CityStatsManager.ErrorType.WrongEmblem);
+                    else if (breaksRuleboard) cityStats.ReportError(CityStatsManager.ErrorType.BannedRule);
+                }
             }
-        }
-        else if (writ != null)
-        {
-            bool shouldBeApproved = !writ.isForged;
-            bool playerApproved = (writ.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
-
-            if (shouldBeApproved == playerApproved) { if (scoreManager != null) scoreManager.AddScore(); }
-            else { if (scoreManager != null) scoreManager.SubtractScore(); }
+            else if (shouldBeApproved && !playerApproved)
+            {
+                // Ο παίκτης ΕΔΙΩΞΕ ένα απολύτως σωστό άτομο.
+                if (scoreManager != null) scoreManager.SubtractScore();
+                // Απλά ρίχνουμε το ηθικό, δεν γυρνάει η ρουλέτα λαθών.
+                if (cityStats != null) cityStats.ModifyStats(0, -5, 0, 0);
+            }
         }
         else if (passport != null)
         {
+            // ΑΠΛΟΣ ΠΟΛΙΤΗΣ
             bool isCityBanned = (bannedCity != "" && passport.originCityName == bannedCity);
             bool shouldBeApproved = !passport.isExpired && !passport.hasCityMismatch && !isCityBanned;
             bool playerApproved = (passport.lastAppliedStamp == VelocityStampTool.StampDecision.Approved);
 
             if (shouldBeApproved == playerApproved)
             {
-                Debug.Log("<color=green>ΣΩΣΤΟ!</color> Ορθή απόφαση για τον Πολίτη.");
                 if (scoreManager != null) scoreManager.AddScore();
             }
-            else
+            else if (!shouldBeApproved && playerApproved)
             {
-                Debug.Log($"<color=red>ΛΑΘΟΣ!</color> Λάθος στον Πολίτη! Αιτία -> Ληγμένο: {passport.isExpired}, Έμβλημα: {passport.hasCityMismatch}, Απαγορευμένη Πόλη: {isCityBanned}");
                 if (scoreManager != null) scoreManager.SubtractScore();
+                if (cityStats != null)
+                {
+                    if (passport.isExpired) cityStats.ReportError(CityStatsManager.ErrorType.Expired);
+                    else if (passport.hasCityMismatch) cityStats.ReportError(CityStatsManager.ErrorType.WrongEmblem);
+                    else if (isCityBanned) cityStats.ReportError(CityStatsManager.ErrorType.BannedRule);
+                }
+            }
+            else if (shouldBeApproved && !playerApproved)
+            {
+                // Ο παίκτης ΕΔΙΩΞΕ ένα απολύτως σωστό άτομο.
+                if (scoreManager != null) scoreManager.SubtractScore();
+                if (cityStats != null) cityStats.ModifyStats(0, -5, 0, 0);
             }
         }
     }
