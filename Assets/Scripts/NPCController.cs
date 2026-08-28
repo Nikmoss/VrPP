@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class NPCController : MonoBehaviour
@@ -350,5 +350,27 @@ public class NPCController : MonoBehaviour
         StopAllCoroutines();
         foreach (var doc in spawnedDocuments) { if (doc != null) Destroy(doc); }
         Destroy(gameObject, 1.5f);
+    }
+
+    // ΠΡΟΣΘΗΚΗ: Μέθοδος για να επιστρέφουν τα χαρτιά στις αρχικές τους θέσεις
+    public void ResetDocumentsToSockets()
+    {
+        for (int i = 0; i < spawnedDocuments.Count; i++)
+        {
+            if (spawnedDocuments[i] != null && clientSockets != null && i < clientSockets.Length && clientSockets[i] != null)
+            {
+                // Μηδενίζουμε τις φυσικές δυνάμεις (αν πέφτουν εκείνη τη στιγμή)
+                Rigidbody rb = spawnedDocuments[i].GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+
+                // Τα επιστρέφουμε ακριβώς στη θέση και περιστροφή των sockets
+                spawnedDocuments[i].transform.position = clientSockets[i].transform.position;
+                spawnedDocuments[i].transform.rotation = clientSockets[i].transform.rotation;
+            }
+        }
     }
 }

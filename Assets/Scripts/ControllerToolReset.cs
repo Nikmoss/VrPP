@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // Απαραίτητο για τα κουμπιά του Controller
+using UnityEngine.InputSystem;
 
 public class ControllerToolReset : MonoBehaviour
 {
@@ -16,7 +16,6 @@ public class ControllerToolReset : MonoBehaviour
 
     private void OnEnable()
     {
-        // Ενεργοποιούμε την παρακολούθηση του κουμπιού
         if (resetButtonAction != null && resetButtonAction.action != null)
         {
             resetButtonAction.action.Enable();
@@ -26,7 +25,6 @@ public class ControllerToolReset : MonoBehaviour
 
     private void OnDisable()
     {
-        // Σταματάμε να ακούμε το κουμπί όταν κλείνει το script (για αποφυγή errors)
         if (resetButtonAction != null && resetButtonAction.action != null)
         {
             resetButtonAction.action.performed -= OnResetButtonPressed;
@@ -36,17 +34,32 @@ public class ControllerToolReset : MonoBehaviour
 
     private void OnResetButtonPressed(InputAction.CallbackContext context)
     {
+        bool didResetSomething = false;
+
+        // 1. Επαναφορά των Εργαλείων (Σφραγίδες, κτλ.)
         if (dayAdvancer != null)
         {
             dayAdvancer.ResetAllTools();
-
-            if (resetSound != null) resetSound.Play();
-
-            Debug.Log("<color=cyan>Τα εργαλεία επέστρεψαν με το πάτημα του Controller!</color>");
+            didResetSomething = true;
         }
         else
         {
             Debug.LogWarning("Ξέχασες να βάλεις το CandleDayAdvancer στο ControllerToolReset!");
+        }
+
+        // 2. Επαναφορά των Χαρτιών του ενεργού NPC
+        NPCController activeNPC = FindObjectOfType<NPCController>();
+        if (activeNPC != null)
+        {
+            activeNPC.ResetDocumentsToSockets();
+            didResetSomething = true;
+            Debug.Log("<color=cyan>Τα έγγραφα του NPC επέστρεψαν στο γραφείο!</color>");
+        }
+
+        // Παίζουμε τον ήχο μόνο αν όντως έγινε επαναφορά (είτε εργαλείων είτε χαρτιών)
+        if (didResetSomething && resetSound != null)
+        {
+            resetSound.Play();
         }
     }
 }
