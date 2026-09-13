@@ -2,6 +2,32 @@ using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
 
+// --- ΝΕΟ: ΕΙΔΗ ΠΕΛΑΤΩΝ ---
+public enum NPCType
+{
+    RandomCitizen,
+    RandomMerchant,
+    ScriptedCitizen,
+    ScriptedMerchant
+}
+
+// --- ΝΕΟ: ΡΥΘΜΙΣΕΙΣ ΓΙΑ ΤΟΝ ΚΑΘΕ ΠΕΛΑΤΗ ΣΤΗΝ ΟΥΡΑ ---
+[System.Serializable]
+public class EncounterSetup
+{
+    [Tooltip("Σημείωση για σένα στον Inspector (π.χ. 'Ο Λαθρέμπορος με τα μήλα')")]
+    public string inspectorNote = "Πελάτης";
+
+    public NPCType npcType = NPCType.RandomCitizen;
+
+    [Header("ΜΟΝΟ ΓΙΑ SCRIPTED")]
+    [Tooltip("Τι λάθος θα έχει ΑΝΑΓΚΑΣΤΙΚΑ ο πελάτης (ή None αν τα χαρτιά του είναι τέλεια)")]
+    public CityStatsManager.ErrorType forcedError = CityStatsManager.ErrorType.None;
+
+    [Tooltip("Βάλε εδώ το 3D Prefab του φαγητού/φαρμάκου. Αν είναι κενό, δεν υπάρχει δωροδοκία.")]
+    public GameObject bribeItemPrefab;
+}
+
 [System.Serializable]
 public class DaySettings
 {
@@ -33,7 +59,12 @@ public class DaySettings
     public bool hideGongMallet = true;
     public bool hideRulebook = true;
 
-    [Header("Πιθανότητες Εμφάνισης (Spawns)")]
+    // --- ΝΕΟ: Η ΟΥΡΑ ΤΗΣ ΗΜΕΡΑΣ ---
+    [Header("Η Ουρά των Πελατών (Sequence)")]
+    [Tooltip("Φτιάξε εδώ τη σειρά των NPC που θα έρθουν στο γραφείο σήμερα")]
+    public List<EncounterSetup> dailyQueue = new List<EncounterSetup>();
+
+    [Header("Πιθανότητες Εμφάνισης (Spawns - Αν δεν υπάρχει ουρά)")]
     [Range(0f, 1f)] public float merchantSpawnProbability = 0.3f;
     [Range(0f, 1f)] public float mercenarySpawnProbability = 0.1f;
 
@@ -72,6 +103,10 @@ public class DayManager : MonoBehaviour
 
     [Header("Ρυθμίσεις Ημερών")]
     public int currentDayIndex = 0;
+
+    // --- ΝΕΟ: Καταγράφει σε ποιον πελάτη της ουράς βρισκόμαστε σήμερα ---
+    [HideInInspector] public int currentNPCIndexInQueue = 0;
+
     public List<DaySettings> days = new List<DaySettings>();
 
     private void Awake()
@@ -94,6 +129,9 @@ public class DayManager : MonoBehaviour
         }
 
         DaySettings today = days[currentDayIndex];
+
+        // Μηδενισμός της ουράς για τη νέα μέρα
+        currentNPCIndexInQueue = 0;
 
         if (letterText != null)
         {
@@ -136,6 +174,22 @@ public class DayManager : MonoBehaviour
     {
         if (days.Count > 0 && currentDayIndex < days.Count)
             return days[currentDayIndex];
+        return null;
+    }
+
+    // --- ΝΕΟ: Επιστρέφει τα δεδομένα του επόμενου NPC για να τα διαβάσει ο Spawner ---
+    public EncounterSetup GetNextEncounter()
+    {
+        DaySettings today = GetCurrentDaySettings();
+        if (today == null) return null;
+
+        if (currentNPCIndexInQueue < today.dailyQueue.Count)
+        {
+            EncounterSetup nextEncounter = today.dailyQueue[currentNPCIndexInQueue];
+            currentNPCIndexInQueue++;
+            return nextEncounter;
+        }
+
         return null;
     }
 }

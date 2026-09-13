@@ -24140,6 +24140,7 @@ MonoBehaviour:
   gongMalletObject: {fileID: 457668189}
   rulebookObject: {fileID: 1917514174}
   currentDayIndex: 5
+  currentNPCIndexInQueue: 0
   days:
   - dayName: 'MERA 1 '
     currentGameYear: 2026
@@ -24153,6 +24154,7 @@ MonoBehaviour:
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 1
+    dailyQueue: []
     merchantSpawnProbability: 0
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -24176,6 +24178,7 @@ MonoBehaviour:
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 1
+    dailyQueue: []
     merchantSpawnProbability: 0.6
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -24199,6 +24202,7 @@ MonoBehaviour:
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
+    dailyQueue: []
     merchantSpawnProbability: 0.6
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.3
@@ -24222,6 +24226,7 @@ MonoBehaviour:
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
+    dailyQueue: []
     merchantSpawnProbability: 0.3
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.75
@@ -24245,6 +24250,7 @@ MonoBehaviour:
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
+    dailyQueue: []
     merchantSpawnProbability: 0.3
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 0.75
@@ -24258,7 +24264,7 @@ MonoBehaviour:
     weightPermitEmblemError: 40
   - dayName: TEST
     currentGameYear: 2026
-    bannedCity: 
+    bannedCity: VOLOS
     bannedItem: 
     newRulesToCarveToday: 0100000003000000
     letterContent: TEST
@@ -24268,6 +24274,59 @@ MonoBehaviour:
     hideGong: 0
     hideGongMallet: 0
     hideRulebook: 0
+    dailyQueue:
+    - inspectorNote: 
+      npcType: 2
+      forcedError: 3
+      bribeItemPrefab: {fileID: 6689992741278781415, guid: 3549fdaf258e11846b85a316c16c699c, type: 3}
+    merchantSpawnProbability: 0
+    mercenarySpawnProbability: 0
+    citizenForgeryProbability: 1
+    merchantForgeryProbability: 0
+    expiredErrorChance: 0
+    weightPassportError: 0
+    weightNameError: 0
+    weightCityError: 0
+    weightDateError: 0
+    weightPurposeError: 0
+    weightPermitEmblemError: 1000
+  - dayName: TEST
+    currentGameYear: 2026
+    bannedCity: VOLOS
+    bannedItem: 
+    newRulesToCarveToday: 0100000003000000
+    letterContent: TEST MERCH
+    hideStamp: 0
+    hideKnife: 0
+    hidePen: 0
+    hideGong: 0
+    hideGongMallet: 0
+    hideRulebook: 0
+    dailyQueue:
+    - inspectorNote: 
+      npcType: 3
+      forcedError: 0
+      bribeItemPrefab: {fileID: 0}
+    - inspectorNote: 
+      npcType: 3
+      forcedError: 1
+      bribeItemPrefab: {fileID: 0}
+    - inspectorNote: 
+      npcType: 3
+      forcedError: 2
+      bribeItemPrefab: {fileID: 0}
+    - inspectorNote: 
+      npcType: 3
+      forcedError: 3
+      bribeItemPrefab: {fileID: 0}
+    - inspectorNote: 
+      npcType: 3
+      forcedError: 5
+      bribeItemPrefab: {fileID: 0}
+    - inspectorNote: 
+      npcType: 3
+      forcedError: 4
+      bribeItemPrefab: {fileID: 0}
     merchantSpawnProbability: 0
     mercenarySpawnProbability: 0
     citizenForgeryProbability: 1

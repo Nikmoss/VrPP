@@ -48,73 +48,116 @@ public class NPCSpawner : MonoBehaviour
 
         yield return new WaitForSeconds(spawnDelay);
 
+        // --- 1. ΕΛΕΓΧΟΣ ΤΗΣ ΟΥΡΑΣ ΑΠΟ ΤΟ DAY MANAGER ---
+        EncounterSetup nextEncounter = null;
+        bool isQueueExhausted = false;
+
+        if (DayManager.Instance != null)
+        {
+            DaySettings today = DayManager.Instance.GetCurrentDaySettings();
+
+            // Ελέγχουμε αν υπάρχει στημένη ουρά για σήμερα
+            if (today != null && today.dailyQueue != null && today.dailyQueue.Count > 0)
+            {
+                nextEncounter = DayManager.Instance.GetNextEncounter();
+
+                if (nextEncounter == null)
+                {
+                    isQueueExhausted = true; // Τελείωσαν οι πελάτες της ημέρας
+                }
+            }
+        }
+
+        // Αν τελείωσε η ουρά, δεν κάνουμε spawn
+        if (isQueueExhausted)
+        {
+            Debug.Log("<color=green>Τέλος Βάρδιας!</color> Δεν υπάρχουν άλλοι πελάτες στην ουρά.");
+            isSpawning = false;
+            yield break;
+        }
+
+        // --- 2. ΔΗΜΙΟΥΡΓΙΑ NPC ---
         currentNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation);
         NPCController controller = currentNPC.GetComponent<NPCController>();
 
         if (controller != null)
         {
-            // --- ΑΝΤΛΗΣΗ ΠΙΘΑΝΟΤΗΤΩΝ ΑΠΟ ΤΟ DAY MANAGER ---
-            float merSpawnProb = 0f;
-            float mercSpawnProb = 0f;
+            GameObject[] docsToSpawn = null;
+            XRSocketInteractor[] socketsToUse = null;
 
-            if (DayManager.Instance != null)
+            // --- 3. ΑΠΟΦΑΣΗ ΤΥΠΟΥ ΠΕΛΑΤΗ (Με βάση την ουρά ή τυχαία αν δεν υπάρχει) ---
+            if (nextEncounter != null)
             {
-                DaySettings today = DayManager.Instance.GetCurrentDaySettings();
-                if (today != null)
+                // ΠΑΙΖΟΥΜΕ ΜΕ ΤΗΝ ΟΥΡΑ (Scripted ή Random από το Inspector)
+                if (nextEncounter.npcType == NPCType.ScriptedMerchant || nextEncounter.npcType == NPCType.RandomMerchant)
                 {
-                    merSpawnProb = today.merchantSpawnProbability;
-                    mercSpawnProb = today.mercenarySpawnProbability;
+                    docsToSpawn = new GameObject[] { passportPrefab, merchantPermitPrefab };
+                    socketsToUse = new XRSocketInteractor[] { primarySocket, secondarySocket };
+                    Debug.Log($"<color=yellow>Έφτασε πελάτης (Από Ουρά): {nextEncounter.npcType} - [{nextEncounter.inspectorNote}]</color>");
+                }
+                else // Citizen
+                {
+                    docsToSpawn = new GameObject[] { passportPrefab };
+                    socketsToUse = new XRSocketInteractor[] { primarySocket };
+                    Debug.Log($"<color=white>Έφτασε πελάτης (Από Ουρά): {nextEncounter.npcType} - [{nextEncounter.inspectorNote}]</color>");
+                }
+            }
+            else
+            {
+                // ΠΑΙΖΟΥΜΕ ΜΕ ΤΟ ΠΑΛΙΟ RANDOM ΣΥΣΤΗΜΑ (Αν η ουρά είναι άδεια, π.χ. Day 1, 2, 3)
+                float merSpawnProb = 0f;
+                float mercSpawnProb = 0f;
+
+                if (DayManager.Instance != null)
+                {
+                    DaySettings today = DayManager.Instance.GetCurrentDaySettings();
+                    if (today != null)
+                    {
+                        merSpawnProb = today.merchantSpawnProbability;
+                        mercSpawnProb = today.mercenarySpawnProbability;
+                    }
+                }
+
+                float roll = Random.value;
+
+                if (roll < merSpawnProb && merchantPermitPrefab != null && secondarySocket != null)
+                {
+                    docsToSpawn = new GameObject[] { passportPrefab, merchantPermitPrefab };
+                    socketsToUse = new XRSocketInteractor[] { primarySocket, secondarySocket };
+                    Debug.Log("<color=yellow>Έφτασε πελάτης (Τυχαία): ΕΜΠΟΡΟΣ</color>");
+                }
+                else if (roll < (merSpawnProb + mercSpawnProb) && mercenaryWritPrefab != null)
+                {
+                    docsToSpawn = new GameObject[] { mercenaryWritPrefab };
+                    socketsToUse = new XRSocketInteractor[] { primarySocket };
+                    Debug.Log("<color=blue>Έφτασε πελάτης (Τυχαία): ΣΤΡΑΤΙΩΤΗΣ</color>");
+                }
+                else
+                {
+                    docsToSpawn = new GameObject[] { passportPrefab };
+                    socketsToUse = new XRSocketInteractor[] { primarySocket };
+                    Debug.Log("<color=white>Έφτασε πελάτης (Τυχαία): ΑΠΛΟΣ ΠΟΛΙΤΗΣ</color>");
                 }
             }
 
-            // Ρίχνουμε το ζάρι από το 0 έως το 1
-            float roll = Random.value;
-
-            GameObject[] docsToSpawn;
-            XRSocketInteractor[] socketsToUse;
-
-            // ΕΛΕΓΧΟΣ 1: Είναι Έμπορος;
-            if (roll < merSpawnProb && merchantPermitPrefab != null && secondarySocket != null)
-            {
-                docsToSpawn = new GameObject[] { passportPrefab, merchantPermitPrefab };
-                socketsToUse = new XRSocketInteractor[] { primarySocket, secondarySocket };
-                Debug.Log("<color=yellow>Έφτασε πελάτης: ΕΜΠΟΡΟΣ</color>");
-            }
-            // ΕΛΕΓΧΟΣ 2: Είναι Στρατιώτης;
-            else if (roll < (merSpawnProb + mercSpawnProb) && mercenaryWritPrefab != null)
-            {
-                docsToSpawn = new GameObject[] { mercenaryWritPrefab };
-                socketsToUse = new XRSocketInteractor[] { primarySocket };
-                Debug.Log("<color=blue>Έφτασε πελάτης: ΣΤΡΑΤΙΩΤΗΣ</color>");
-            }
-            // ΕΛΕΓΧΟΣ 3: Απλός Πολίτης (Χωρικός/Πρόσφυγας)
-            else
-            {
-                docsToSpawn = new GameObject[] { passportPrefab };
-                socketsToUse = new XRSocketInteractor[] { primarySocket };
-                Debug.Log("<color=white>Έφτασε πελάτης: ΑΠΛΟΣ ΠΟΛΙΤΗΣ</color>");
-            }
-
-            controller.Setup(spawnPoint, windowPoint, exitPoint, docsToSpawn, socketsToUse);
+            // Στήσιμο εγγράφω
+            controller.Setup(spawnPoint, windowPoint, exitPoint, docsToSpawn, socketsToUse, nextEncounter);
         }
 
         isSpawning = false;
     }
 
-    // --- ΝΕΑ ΜΕΘΟΔΟΣ: Καθαρίζει τα πάντα για τη νέα μέρα ---
     public void ResetSpawner()
     {
         StopAllCoroutines();
         isSpawning = false;
 
-        // Διαγραφή του NPC αν υπάρχει
         if (currentNPC != null)
         {
             Destroy(currentNPC);
             currentNPC = null;
         }
 
-        // Σάρωση και διαγραφή όλων των εγγράφων που έχουν μείνει στη σκηνή
         DynamicPassport[] passports = FindObjectsOfType<DynamicPassport>();
         foreach (var p in passports) Destroy(p.gameObject);
 

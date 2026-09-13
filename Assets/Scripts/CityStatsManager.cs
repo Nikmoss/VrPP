@@ -44,7 +44,7 @@ public class CityStatsManager : MonoBehaviour
     [Header("Ρυθμίσεις Ρουλέτας")]
     public float displayDuration = 6.0f; // Πόσο θα μείνει ανοιχτό το τελικό σύμβολο
 
-    public enum ErrorType { None, Expired, WrongEmblem, WrongName, BannedRule }
+    public enum ErrorType { None, WrongName, Expired, WrongEmblem, BannedRule, DifCity }
 
     private void Start()
     {
