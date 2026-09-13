@@ -65,10 +65,16 @@ public class NPCController : MonoBehaviour
         bool isScripted = currentEncounter != null && (currentEncounter.npcType == NPCType.ScriptedCitizen || currentEncounter.npcType == NPCType.ScriptedMerchant);
         CityStatsManager.ErrorType forcedError = isScripted ? currentEncounter.forcedError : CityStatsManager.ErrorType.None;
 
+        // --- ΝΕΟ: ΕΜΦΑΝΙΣΗ ΔΩΡΟΔΟΚΙΑΣ ΣΤΟ ΓΚΙΣΕ ---
         if (isScripted && currentEncounter.bribeItemPrefab != null)
         {
-            Vector3 bribePos = windowPoint.position + new Vector3(0.4f, 0, 0);
+            // Παίρνουμε τη θέση του Socket του Διαβατηρίου (clientSockets[0])
+            // και το βάζουμε να κάνει spawn 15 πόντους πιο ψηλά και 20 πόντους πιο δεξιά, για να πέσει στο τραπέζι.
+            Vector3 deskPos = clientSockets[0].transform.position;
+            Vector3 bribePos = deskPos + new Vector3(0.2f, 0.15f, 0f);
+
             spawnedBribeItem = Instantiate(currentEncounter.bribeItemPrefab, bribePos, Quaternion.identity);
+            Debug.Log("<color=magenta>Το δώρο δωροδοκίας εμφανίστηκε στο γραφείο!</color>");
         }
 
         // ==========================================
